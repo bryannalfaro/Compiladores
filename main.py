@@ -1,8 +1,8 @@
 from antlr4 import *
-from ANTLR.HelloWorldLexer import HelloWorldLexer
-from ANTLR.HelloWorldParser import HelloWorldParser
-from ANTLR.HelloWorldVisitor import HelloWorldVisitor
-from VisitorImpl import HelloWorld
+from ANTLR.YAPLLexer import YAPLLexer
+from ANTLR.YAPLParser import YAPLParser
+from ANTLR.YAPLVisitor import YAPLVisitor
+from VisitorImpl import YAPL
 import os
 from antlr4.tree.Trees import Trees
 
@@ -10,10 +10,10 @@ from antlr4.tree.Trees import Trees
 
 def evaluate_expression(input_str):
     input_stream = InputStream(input_str)
-    lexer = HelloWorldLexer(input_stream)
+    lexer = YAPLLexer(input_stream)
     token_stream = CommonTokenStream(lexer)
-    parser = HelloWorldParser(token_stream)
-    tree = parser.start()
+    parser = YAPLParser(token_stream)
+    tree = parser.program()
 
     print(Trees.toStringTree(tree, None, parser))
 
@@ -22,16 +22,27 @@ def evaluate_expression(input_str):
         print(token.text,token.line)
     
     #command to show tree
-    command = f"antlr4-parse HelloWorld.g4 start -gui"
+    command = f"antlr4-parse YAPL.g4 program -gui"
     process = os.popen(command, 'w')
     process.write(input_string)
     process.close()
 
-    visitor = HelloWorld()
+    visitor = YAPL()
     return visitor.visit(tree)
 
 # Example usage
-input_string = "2 + (3 * 4)"
+input_string = """
+(* hello-world.cl *) 
+class Main inherits IO { 
+  a: Int <- 5;
+  b: Int <- 6;
+  c: Int <- 8;
+  d: Int <- c * a - b;
+    main() : Object { 
+      out_int(d)
+    } ; 
+} ; 
+"""
 result = evaluate_expression(input_string)
 print(result)  # Output: 14
 
