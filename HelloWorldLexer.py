@@ -1,4 +1,4 @@
-# Generated from Calculator.g4 by ANTLR 4.13.0
+# Generated from HelloWorld.g4 by ANTLR 4.13.0
 from antlr4 import *
 from io import StringIO
 import sys
@@ -26,7 +26,7 @@ def serializedATN():
         0,0,0,3,0,32,37,1,6,0,0
     ]
 
-class CalculatorLexer(Lexer):
+class HelloWorldLexer(Lexer):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
@@ -54,7 +54,7 @@ class CalculatorLexer(Lexer):
     ruleNames = [ "T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "NUMBER", 
                   "WS" ]
 
-    grammarFileName = "Calculator.g4"
+    grammarFileName = "HelloWorld.g4"
 
     def __init__(self, input=None, output:TextIO = sys.stdout):
         super().__init__(input, output)

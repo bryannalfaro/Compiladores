@@ -1,4 +1,4 @@
-# Generated from Calculator.g4 by ANTLR 4.13.0
+# Generated from HelloWorld.g4 by ANTLR 4.13.0
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -23,9 +23,9 @@ def serializedATN():
         7,1,0,0,0,3,16,24,32
     ]
 
-class CalculatorParser ( Parser ):
+class HelloWorldParser ( Parser ):
 
-    grammarFileName = "Calculator.g4"
+    grammarFileName = "HelloWorld.g4"
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
@@ -72,14 +72,14 @@ class CalculatorParser ( Parser ):
             self.parser = parser
 
         def expression(self):
-            return self.getTypedRuleContext(CalculatorParser.ExpressionContext,0)
+            return self.getTypedRuleContext(HelloWorldParser.ExpressionContext,0)
 
 
         def EOF(self):
-            return self.getToken(CalculatorParser.EOF, 0)
+            return self.getToken(HelloWorldParser.EOF, 0)
 
         def getRuleIndex(self):
-            return CalculatorParser.RULE_start
+            return HelloWorldParser.RULE_start
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterStart" ):
@@ -89,19 +89,25 @@ class CalculatorParser ( Parser ):
             if hasattr( listener, "exitStart" ):
                 listener.exitStart(self)
 
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitStart" ):
+                return visitor.visitStart(self)
+            else:
+                return visitor.visitChildren(self)
+
 
 
 
     def start(self):
 
-        localctx = CalculatorParser.StartContext(self, self._ctx, self.state)
+        localctx = HelloWorldParser.StartContext(self, self._ctx, self.state)
         self.enterRule(localctx, 0, self.RULE_start)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 8
             self.expression()
             self.state = 9
-            self.match(CalculatorParser.EOF)
+            self.match(HelloWorldParser.EOF)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -120,13 +126,13 @@ class CalculatorParser ( Parser ):
 
         def term(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(CalculatorParser.TermContext)
+                return self.getTypedRuleContexts(HelloWorldParser.TermContext)
             else:
-                return self.getTypedRuleContext(CalculatorParser.TermContext,i)
+                return self.getTypedRuleContext(HelloWorldParser.TermContext,i)
 
 
         def getRuleIndex(self):
-            return CalculatorParser.RULE_expression
+            return HelloWorldParser.RULE_expression
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterExpression" ):
@@ -136,12 +142,18 @@ class CalculatorParser ( Parser ):
             if hasattr( listener, "exitExpression" ):
                 listener.exitExpression(self)
 
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitExpression" ):
+                return visitor.visitExpression(self)
+            else:
+                return visitor.visitChildren(self)
+
 
 
 
     def expression(self):
 
-        localctx = CalculatorParser.ExpressionContext(self, self._ctx, self.state)
+        localctx = HelloWorldParser.ExpressionContext(self, self._ctx, self.state)
         self.enterRule(localctx, 2, self.RULE_expression)
         self._la = 0 # Token type
         try:
@@ -183,13 +195,13 @@ class CalculatorParser ( Parser ):
 
         def factor(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(CalculatorParser.FactorContext)
+                return self.getTypedRuleContexts(HelloWorldParser.FactorContext)
             else:
-                return self.getTypedRuleContext(CalculatorParser.FactorContext,i)
+                return self.getTypedRuleContext(HelloWorldParser.FactorContext,i)
 
 
         def getRuleIndex(self):
-            return CalculatorParser.RULE_term
+            return HelloWorldParser.RULE_term
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterTerm" ):
@@ -199,12 +211,18 @@ class CalculatorParser ( Parser ):
             if hasattr( listener, "exitTerm" ):
                 listener.exitTerm(self)
 
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitTerm" ):
+                return visitor.visitTerm(self)
+            else:
+                return visitor.visitChildren(self)
+
 
 
 
     def term(self):
 
-        localctx = CalculatorParser.TermContext(self, self._ctx, self.state)
+        localctx = HelloWorldParser.TermContext(self, self._ctx, self.state)
         self.enterRule(localctx, 4, self.RULE_term)
         self._la = 0 # Token type
         try:
@@ -245,14 +263,14 @@ class CalculatorParser ( Parser ):
             self.parser = parser
 
         def NUMBER(self):
-            return self.getToken(CalculatorParser.NUMBER, 0)
+            return self.getToken(HelloWorldParser.NUMBER, 0)
 
         def expression(self):
-            return self.getTypedRuleContext(CalculatorParser.ExpressionContext,0)
+            return self.getTypedRuleContext(HelloWorldParser.ExpressionContext,0)
 
 
         def getRuleIndex(self):
-            return CalculatorParser.RULE_factor
+            return HelloWorldParser.RULE_factor
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterFactor" ):
@@ -262,12 +280,18 @@ class CalculatorParser ( Parser ):
             if hasattr( listener, "exitFactor" ):
                 listener.exitFactor(self)
 
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitFactor" ):
+                return visitor.visitFactor(self)
+            else:
+                return visitor.visitChildren(self)
+
 
 
 
     def factor(self):
 
-        localctx = CalculatorParser.FactorContext(self, self._ctx, self.state)
+        localctx = HelloWorldParser.FactorContext(self, self._ctx, self.state)
         self.enterRule(localctx, 6, self.RULE_factor)
         try:
             self.state = 32
@@ -276,16 +300,16 @@ class CalculatorParser ( Parser ):
             if token in [7]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 27
-                self.match(CalculatorParser.NUMBER)
+                self.match(HelloWorldParser.NUMBER)
                 pass
             elif token in [5]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 28
-                self.match(CalculatorParser.T__4)
+                self.match(HelloWorldParser.T__4)
                 self.state = 29
                 self.expression()
                 self.state = 30
-                self.match(CalculatorParser.T__5)
+                self.match(HelloWorldParser.T__5)
                 pass
             else:
                 raise NoViableAltException(self)
