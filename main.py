@@ -1,7 +1,7 @@
 from antlr4 import *
-from HelloWorldLexer import HelloWorldLexer
-from HelloWorldParser import HelloWorldParser
-from HelloWorldVisitor import HelloWorldVisitor
+from ANTLR.HelloWorldLexer import HelloWorldLexer
+from ANTLR.HelloWorldParser import HelloWorldParser
+from ANTLR.HelloWorldVisitor import HelloWorldVisitor
 from VisitorImpl import HelloWorld
 import os
 from antlr4.tree.Trees import Trees
