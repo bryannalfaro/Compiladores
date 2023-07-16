@@ -1,5 +1,7 @@
 from antlr4 import *
 from ANTLR.YAPLParser import YAPLParser
+from ErrorListener import MyErrorVisitor
+from termcolor import cprint    
 class HelloWorld(ParseTreeVisitor):
     def visitStart(self, ctx):
         return self.visit(ctx.expression())
@@ -33,6 +35,9 @@ class HelloWorld(ParseTreeVisitor):
             return self.visit(ctx.expression())
 
 class YAPL(ParseTreeVisitor):
+    def __init__(self):
+        super().__init__()
+        self.errors_list = []
      # Visit a parse tree produced by YAPLParser#program.
     def visitProgram(self, ctx:YAPLParser.ProgramContext):
         return self.visitChildren(ctx)
@@ -70,9 +75,15 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#string.
     def visitString(self, ctx:YAPLParser.StringContext):
-        if len(ctx.getText()) > 13:
+        if len(ctx.getText()[1:-1]) > 13:
             firstToken: Token = ctx.start
-            print(ctx.getText() + " STRING IS TOO LONG AT: " + str(firstToken.line) + ":" + str(firstToken.column))
+            cprint(ctx.getText() + " ERROR STRING IS TOO LONG AT: " + str(firstToken.line) + ":" + str(firstToken.column),'red')
+        
+        #add unescaped new line error
+        string_text = ctx.getText()[1:-1]
+        if ('\n' in string_text and string_text[-1] != '\\n') or (string_text[-1] == '\\n'):
+            firstToken: Token = ctx.start
+            cprint(ctx.getText() + " ERROR UNESCAPED NEW LINE AT: " + str(firstToken.line) + ":" + str(firstToken.column),'red')
         return self.visitChildren(ctx)
 
 

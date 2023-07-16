@@ -72,6 +72,7 @@ DIV: '/';
 EQUAL: '=';
 LESS_THAN: '<';
 LESS_EQUAL: '<=';
+ERROR: . ; //cath errors
 
 
 
