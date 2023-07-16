@@ -5,30 +5,30 @@ class_grammar: CLASS TYPE (INHERITS TYPE)? '{' (feature ';')* '}';
 feature: ID '(' (formal (',' formal)*)?')' ':' TYPE '{' expr '}'
 | ID ':' TYPE (ASSIGN_OP expr)?;
 formal: ID ':' TYPE;
-expr: ID ASSIGN_OP expr
-| expr('@'TYPE)?'.'ID '(' (expr (',' expr)*)? ')'
-| ID '(' (expr (',' expr)*)? ')'
-| IF expr THEN expr ELSE expr FI
-| WHILE expr LOOP expr POOL
-| '{' (expr ';')+ '}'
-| LET ID ':' TYPE (ASSIGN_OP expr)? (',' ID ':' TYPE (ASSIGN_OP expr)?)* IN expr
-| NEW TYPE
-| '~' expr
-| ISVOID expr
-| expr MULT expr
-| expr DIV expr
-| expr PLUS expr
-| expr MINUS expr
-| expr LESS_THAN expr
-| expr LESS_EQUAL expr
-| expr EQUAL expr
-| NOT expr
-| '(' expr ')'
-| ID
-| INT
-| STRING
-| TRUE
-| FALSE; 
+expr: ID ASSIGN_OP expr # assign
+| expr('@'TYPE)?'.'ID '(' (expr (',' expr)*)? ')' # bigexpr
+| ID '(' (expr (',' expr)*)? ')' # call
+| IF expr THEN expr ELSE expr FI # if
+| WHILE expr LOOP expr POOL # while
+| '{' (expr ';')+ '}' # curly
+| LET ID ':' TYPE (ASSIGN_OP expr)? (',' ID ':' TYPE (ASSIGN_OP expr)?)* IN expr # let
+| NEW TYPE # newtype
+| '~' expr # negation
+| ISVOID expr # isvoid
+| expr MULT expr # times
+| expr DIV expr # div
+| expr PLUS expr # plus
+| expr MINUS expr # minus
+| expr LESS_THAN expr # less
+| expr LESS_EQUAL expr # lesseq
+| expr EQUAL expr # equal
+| NOT expr # not
+| '(' expr ')' # paren
+| ID # id
+| INT # int
+| STRING # string
+| TRUE # true
+| FALSE # false; 
 
 
 

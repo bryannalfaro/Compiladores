@@ -39,7 +39,7 @@ class Main inherits IO {
   c: Int <- 8;
   d: Int <- c * a - b;
     main() : Object { 
-      out_int(d)
+      out_int("HELLO WORLD   ")
     } ; 
 } ; 
 """
