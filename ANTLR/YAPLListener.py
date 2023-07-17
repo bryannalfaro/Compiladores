@@ -44,12 +44,12 @@ class YAPLListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by YAPLParser#minus.
-    def enterMinus(self, ctx:YAPLParser.MinusContext):
+    # Enter a parse tree produced by YAPLParser#plusminus.
+    def enterPlusminus(self, ctx:YAPLParser.PlusminusContext):
         pass
 
-    # Exit a parse tree produced by YAPLParser#minus.
-    def exitMinus(self, ctx:YAPLParser.MinusContext):
+    # Exit a parse tree produced by YAPLParser#plusminus.
+    def exitPlusminus(self, ctx:YAPLParser.PlusminusContext):
         pass
 
 
@@ -125,15 +125,6 @@ class YAPLListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by YAPLParser#plus.
-    def enterPlus(self, ctx:YAPLParser.PlusContext):
-        pass
-
-    # Exit a parse tree produced by YAPLParser#plus.
-    def exitPlus(self, ctx:YAPLParser.PlusContext):
-        pass
-
-
     # Enter a parse tree produced by YAPLParser#call.
     def enterCall(self, ctx:YAPLParser.CallContext):
         pass
@@ -152,12 +143,12 @@ class YAPLListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by YAPLParser#div.
-    def enterDiv(self, ctx:YAPLParser.DivContext):
+    # Enter a parse tree produced by YAPLParser#timesdiv.
+    def enterTimesdiv(self, ctx:YAPLParser.TimesdivContext):
         pass
 
-    # Exit a parse tree produced by YAPLParser#div.
-    def exitDiv(self, ctx:YAPLParser.DivContext):
+    # Exit a parse tree produced by YAPLParser#timesdiv.
+    def exitTimesdiv(self, ctx:YAPLParser.TimesdivContext):
         pass
 
 
@@ -185,15 +176,6 @@ class YAPLListener(ParseTreeListener):
 
     # Exit a parse tree produced by YAPLParser#paren.
     def exitParen(self, ctx:YAPLParser.ParenContext):
-        pass
-
-
-    # Enter a parse tree produced by YAPLParser#times.
-    def enterTimes(self, ctx:YAPLParser.TimesContext):
-        pass
-
-    # Exit a parse tree produced by YAPLParser#times.
-    def exitTimes(self, ctx:YAPLParser.TimesContext):
         pass
 
 

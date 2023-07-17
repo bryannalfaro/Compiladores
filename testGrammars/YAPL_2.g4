@@ -3,30 +3,43 @@ grammar YAPL;
 program: (class_grammar ';')+;
 class_grammar: CLASS TYPE (INHERITS TYPE)? '{' (feature ';')* '}';
 feature: ID '(' (formal (',' formal)*)?')' ':' TYPE '{' expr '}'
-| ID ':' TYPE (ASSIGN_OP expr)?;
+       | ID ':' TYPE (ASSIGN_OP expr)?;
 formal: ID ':' TYPE;
-expr: ID ASSIGN_OP expr # assign
-| expr('@'TYPE)?'.'ID '(' (expr (',' expr)*)? ')' # bigexpr
-| ID '(' (expr (',' expr)*)? ')' # call
-| IF expr THEN expr ELSE expr FI # if
-| WHILE expr LOOP expr POOL # while
-| '{' (expr ';')+ '}' # curly
-| LET ID ':' TYPE (ASSIGN_OP expr)? (',' ID ':' TYPE (ASSIGN_OP expr)?)* IN expr # let
-| NEW TYPE # newtype
-| '~' expr # negation
-| ISVOID expr # isvoid
-| expr (MULT | DIV) expr # timesdiv
-| expr (PLUS | MINUS) expr # plusminus
-| expr LESS_THAN expr # less
-| expr LESS_EQUAL expr # lesseq
-| expr EQUAL expr # equal
-| NOT expr # not
-| '(' expr ')' # paren
-| ID # id
-| INT # int
-| STRING # string
-| TRUE # true
-| FALSE # false; 
+expr: assignment_expr # assignment
+    | expr ('@' TYPE)? '.' ID '(' (expr (',' expr)*)? ')' #bigexpr
+    | call_expr #call
+    | if_expr #if
+    | while_expr #while
+    | block_expr #block
+    | let_expr #let
+    | new_expr #new
+    | '~' expr # negation
+    | isvoid_expr #isvoid
+    | expr timesdiv_expr #timesdiv
+    | expr plusminus_expr #plusminus
+    | expr comparison_expr #comparison
+    | not_expr #not
+    | paren_expr #paren
+    | ID # id
+    | INT # int
+    | STRING # string
+    | TRUE # true
+    | FALSE # false
+    ;
+
+assignment_expr: ID ASSIGN_OP expr;
+call_expr: ID '(' (expr (',' expr)*)? ')';
+if_expr: IF expr THEN expr ELSE expr FI;
+while_expr: WHILE expr LOOP expr POOL;
+block_expr: '{' (expr ';')+ '}';
+let_expr: LET ID ':' TYPE (ASSIGN_OP expr)? (',' ID ':' TYPE (ASSIGN_OP expr)?)* IN expr;
+new_expr: NEW TYPE;
+isvoid_expr: ISVOID expr;
+timesdiv_expr: (MULT | DIV) expr;
+plusminus_expr: (PLUS | MINUS) expr;
+comparison_expr: (LESS_THAN | LESS_EQUAL | EQUAL) expr;
+not_expr: NOT expr;
+paren_expr: '(' expr ')';
 
 
 

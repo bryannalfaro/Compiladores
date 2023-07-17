@@ -29,8 +29,8 @@ class YAPLVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by YAPLParser#minus.
-    def visitMinus(self, ctx:YAPLParser.MinusContext):
+    # Visit a parse tree produced by YAPLParser#plusminus.
+    def visitPlusminus(self, ctx:YAPLParser.PlusminusContext):
         return self.visitChildren(ctx)
 
 
@@ -74,11 +74,6 @@ class YAPLVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by YAPLParser#plus.
-    def visitPlus(self, ctx:YAPLParser.PlusContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by YAPLParser#call.
     def visitCall(self, ctx:YAPLParser.CallContext):
         return self.visitChildren(ctx)
@@ -89,8 +84,8 @@ class YAPLVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by YAPLParser#div.
-    def visitDiv(self, ctx:YAPLParser.DivContext):
+    # Visit a parse tree produced by YAPLParser#timesdiv.
+    def visitTimesdiv(self, ctx:YAPLParser.TimesdivContext):
         return self.visitChildren(ctx)
 
 
@@ -106,11 +101,6 @@ class YAPLVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#paren.
     def visitParen(self, ctx:YAPLParser.ParenContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by YAPLParser#times.
-    def visitTimes(self, ctx:YAPLParser.TimesContext):
         return self.visitChildren(ctx)
 
 
