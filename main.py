@@ -7,22 +7,23 @@ import os
 from antlr4.tree.Trees import Trees
 from ErrorListener import MyErrorListener
 from termcolor import cprint
+from customLexer import CustomLexer
 
 
 
 def evaluate_expression(input_str):
     input_stream = InputStream(input_str)
-    lexer = YAPLLexer(input_stream)
-
+    lexer = CustomLexer(input_stream)
+    token_stream = CommonTokenStream(lexer)
     listener = MyErrorListener()
-
+    token_stream.fill()  # Ensure all tokens are loaded
     #errors
     lexer.removeErrorListeners()
     lexer.addErrorListener(listener)
-    token_stream = CommonTokenStream(lexer)
+    
 
 
-    token_stream.fill()  # Ensure all tokens are loaded
+    
     for token in token_stream.getTokens(0, len(token_stream.tokens) - 1):
         if token.type == YAPLLexer.ERROR:
             cprint(f"Error token: {token.text} at line {token.line}, column {token.column}","red")

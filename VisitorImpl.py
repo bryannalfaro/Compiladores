@@ -75,15 +75,6 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#string.
     def visitString(self, ctx:YAPLParser.StringContext):
-        if len(ctx.getText()[1:-1]) > 13:
-            firstToken: Token = ctx.start
-            cprint(ctx.getText() + " ERROR STRING IS TOO LONG AT: " + str(firstToken.line) + ":" + str(firstToken.column),'red')
-        
-        #add unescaped new line error
-        string_text = ctx.getText()[1:-1]
-        if ('\n' in string_text and string_text[-1] != '\\n') or (string_text[-1] == '\\n'):
-            firstToken: Token = ctx.start
-            cprint(ctx.getText() + " ERROR UNESCAPED NEW LINE AT: " + str(firstToken.line) + ":" + str(firstToken.column),'red')
         return self.visitChildren(ctx)
 
 
