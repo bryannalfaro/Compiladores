@@ -15,19 +15,20 @@ expr: ID ASSIGN_OP expr # assign
 | NEW TYPE # newtype
 | '~' expr # negation
 | ISVOID expr # isvoid
-| expr (MULT | DIV) expr # timesdiv
-| expr (PLUS | MINUS) expr # plusminus
-| expr LESS_THAN expr # less
-| expr LESS_EQUAL expr # lesseq
-| expr EQUAL expr # equal
+| timesDiv_expr # timesdiv
+| plusMinus_expr # plusminus
+| comparison_expr # comparison
 | NOT expr # not
 | '(' expr ')' # paren
 | ID # id
 | INT # int
 | STRING # string
 | TRUE # true
-| FALSE # false; 
+| FALSE # false;
 
+timesDiv_expr: (MULT | DIV) expr;
+plusMinus_expr: (PLUS | MINUS) expr;
+comparison_expr: (LESS_THAN | LESS_EQUAL | EQUAL) expr;
 
 
 
