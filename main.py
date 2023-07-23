@@ -50,7 +50,15 @@ def evaluate_expression(input_str):
       process = os.popen(command, 'w')
       process.write(input_string)
       process.close()
-      return visitor.visit(tree)
+      visitor.visit(tree)
+      #see errors
+      if len(visitor.errors_list) > 0:
+        cprint("Type errors found","red")
+        for error in visitor.errors_list:
+            print(error)
+      else:
+          cprint("No type errors found","green")
+      return None
 
     
     
@@ -58,5 +66,4 @@ def evaluate_expression(input_str):
 # Example usage
 input_string = FileStream(input('name file : ')).strdata
 result = evaluate_expression(input_string)
-print(result)  # Output: 14
 

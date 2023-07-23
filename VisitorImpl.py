@@ -60,9 +60,21 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#plusminus.
     def visitPlusminus(self, ctx:YAPLParser.PlusminusContext):
-        return self.visitChildren(ctx)
-
-
+        #get the type of the left and right side
+        print('CONTEXT', ctx.getText())
+        results = []
+        for plus_node in ctx.expr():
+            print('PLUS NODE', plus_node.getText()  )
+            results.append(self.visit(plus_node))
+        print('RESULTS', results)
+        left = results[0]
+        right = results[-1]
+        #if the type of the left and right side are not the same, then add an error
+        if left != right:
+            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            return "ERROR"
+        else:
+            return "INTEGER"
     # Visit a parse tree produced by YAPLParser#negation.
     def visitNegation(self, ctx:YAPLParser.NegationContext):
         return self.visitChildren(ctx)
@@ -100,7 +112,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#int.
     def visitInt(self, ctx:YAPLParser.IntContext):
-        return self.visitChildren(ctx)
+        return "INTEGER"
 
 
     # Visit a parse tree produced by YAPLParser#call.
