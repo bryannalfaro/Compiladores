@@ -77,7 +77,14 @@ class YAPL(ParseTreeVisitor):
             return "INTEGER"
     # Visit a parse tree produced by YAPLParser#negation.
     def visitNegation(self, ctx:YAPLParser.NegationContext):
-        return self.visitChildren(ctx)
+        print('CONTEXT', ctx.getText())
+        result = self.visit(ctx.expr())
+        #check if the type is an integer
+        if result == "INTEGER":
+            return "INTEGER"
+        else:
+            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            return "ERROR"
 
 
     # Visit a parse tree produced by YAPLParser#curly.
@@ -102,7 +109,18 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#less.
     def visitLess(self, ctx:YAPLParser.LessContext):
-        return self.visitChildren(ctx)
+        print('CONTEXT', ctx.getText())
+        results = []
+        for less_node in ctx.expr():
+            results.append(self.visit(less_node))
+        left = results[0]
+        right = results[-1]
+        #if the type of the left and right side are not the same, then add an error
+        if left != right:
+            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            return "ERROR"
+        else:
+            return "BOOL"
 
 
     # Visit a parse tree produced by YAPLParser#while.
@@ -127,17 +145,53 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#timesdiv.
     def visitTimesdiv(self, ctx:YAPLParser.TimesdivContext):
-        return self.visitChildren(ctx)
+        #get the type of the left and right side
+        print('CONTEXT', ctx.getText())
+        results = []
+        for times_node in ctx.expr():
+            print('PLUS NODE', times_node.getText()  )
+            results.append(self.visit(times_node))
+        print('RESULTS', results)
+        left = results[0]
+        right = results[-1]
+        #if the type of the left and right side are not the same, then add an error
+        if left != right:
+            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            return "ERROR"
+        else:
+            return "INTEGER"
 
 
     # Visit a parse tree produced by YAPLParser#equal.
     def visitEqual(self, ctx:YAPLParser.EqualContext):
-        return self.visitChildren(ctx)
+        print('CONTEXT', ctx.getText())
+        results = []
+        for equal_node in ctx.expr():
+            results.append(self.visit(equal_node))
+        left = results[0]
+        right = results[-1]
+        #if the type of the left and right side are not the same, then add an error
+
+        if left != right:
+            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            return "ERROR"
+        else:
+            return "BOOL"
 
 
     # Visit a parse tree produced by YAPLParser#not.
     def visitNot(self, ctx:YAPLParser.NotContext):
-        return self.visitChildren(ctx)
+        print('CONTEXT', ctx.getText())
+        #get the type of the left and right side
+        print('CONTEXT', ctx.getText())
+        result = self.visit(ctx.expr())
+        print('RESULTS', result)
+        #if they are integers, then return an error
+        if result == "INTEGER":
+            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            return "ERROR"
+        else:
+            return "BOOL"
 
 
     # Visit a parse tree produced by YAPLParser#paren.
@@ -147,7 +201,18 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#lesseq.
     def visitLesseq(self, ctx:YAPLParser.LesseqContext):
-        return self.visitChildren(ctx)
+        print('CONTEXT', ctx.getText())
+        results = []
+        for lesseq_node in ctx.expr():
+            results.append(self.visit(lesseq_node))
+        left = results[0]
+        right = results[-1]
+        #if the type of the left and right side are not the same, then add an error
+        if left != right:
+            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            return "ERROR"
+        else:
+            return "BOOL"
 
 
     # Visit a parse tree produced by YAPLParser#true.
