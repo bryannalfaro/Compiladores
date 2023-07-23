@@ -17,9 +17,7 @@ expr: ID ASSIGN_OP expr # assign
 | ISVOID expr # isvoid
 | expr (MULT | DIV) expr # timesdiv
 | expr (PLUS | MINUS) expr # plusminus
-| expr LESS_THAN expr # less
-| expr LESS_EQUAL expr # lesseq
-| expr EQUAL expr # equal
+| expr (LESS_THAN | LESS_EQUAL | EQUAL) expr # compare
 | NOT expr # not
 | '(' expr ')' # paren
 | ID # id

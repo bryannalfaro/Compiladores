@@ -62,6 +62,15 @@ class YAPLListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by YAPLParser#compare.
+    def enterCompare(self, ctx:YAPLParser.CompareContext):
+        pass
+
+    # Exit a parse tree produced by YAPLParser#compare.
+    def exitCompare(self, ctx:YAPLParser.CompareContext):
+        pass
+
+
     # Enter a parse tree produced by YAPLParser#curly.
     def enterCurly(self, ctx:YAPLParser.CurlyContext):
         pass
@@ -95,15 +104,6 @@ class YAPLListener(ParseTreeListener):
 
     # Exit a parse tree produced by YAPLParser#false.
     def exitFalse(self, ctx:YAPLParser.FalseContext):
-        pass
-
-
-    # Enter a parse tree produced by YAPLParser#less.
-    def enterLess(self, ctx:YAPLParser.LessContext):
-        pass
-
-    # Exit a parse tree produced by YAPLParser#less.
-    def exitLess(self, ctx:YAPLParser.LessContext):
         pass
 
 
@@ -152,15 +152,6 @@ class YAPLListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by YAPLParser#equal.
-    def enterEqual(self, ctx:YAPLParser.EqualContext):
-        pass
-
-    # Exit a parse tree produced by YAPLParser#equal.
-    def exitEqual(self, ctx:YAPLParser.EqualContext):
-        pass
-
-
     # Enter a parse tree produced by YAPLParser#not.
     def enterNot(self, ctx:YAPLParser.NotContext):
         pass
@@ -176,15 +167,6 @@ class YAPLListener(ParseTreeListener):
 
     # Exit a parse tree produced by YAPLParser#paren.
     def exitParen(self, ctx:YAPLParser.ParenContext):
-        pass
-
-
-    # Enter a parse tree produced by YAPLParser#lesseq.
-    def enterLesseq(self, ctx:YAPLParser.LesseqContext):
-        pass
-
-    # Exit a parse tree produced by YAPLParser#lesseq.
-    def exitLesseq(self, ctx:YAPLParser.LesseqContext):
         pass
 
 

@@ -71,10 +71,16 @@ class YAPL(ParseTreeVisitor):
         right = results[-1]
         #if the type of the left and right side are not the same, then add an error
         if left != right:
-            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
+            self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
             return "ERROR"
         else:
-            return "INTEGER"
+            if left == "INTEGER":
+                return "INTEGER"
+            elif left == "BOOL":
+                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
+                return "ERROR"
+
     # Visit a parse tree produced by YAPLParser#negation.
     def visitNegation(self, ctx:YAPLParser.NegationContext):
         print('CONTEXT', ctx.getText())
@@ -82,6 +88,8 @@ class YAPL(ParseTreeVisitor):
         #check if the type is an integer
         if result == "INTEGER":
             return "INTEGER"
+        elif result == "BOOL":
+            return "BOOL"
         else:
             self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
             return "ERROR"
@@ -94,7 +102,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#string.
     def visitString(self, ctx:YAPLParser.StringContext):
-        return self.visitChildren(ctx)
+        return "STRING"
 
 
     # Visit a parse tree produced by YAPLParser#isvoid.
@@ -104,23 +112,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#false.
     def visitFalse(self, ctx:YAPLParser.FalseContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by YAPLParser#less.
-    def visitLess(self, ctx:YAPLParser.LessContext):
-        print('CONTEXT', ctx.getText())
-        results = []
-        for less_node in ctx.expr():
-            results.append(self.visit(less_node))
-        left = results[0]
-        right = results[-1]
-        #if the type of the left and right side are not the same, then add an error
-        if left != right:
-            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
-            return "ERROR"
-        else:
-            return "BOOL"
+        return "BOOL"
 
 
     # Visit a parse tree produced by YAPLParser#while.
@@ -156,24 +148,29 @@ class YAPL(ParseTreeVisitor):
         right = results[-1]
         #if the type of the left and right side are not the same, then add an error
         if left != right:
-            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
+            self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
             return "ERROR"
         else:
-            return "INTEGER"
+            if left == "INTEGER":
+                return "INTEGER"
+            elif left == "BOOL":
+                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
+                return "ERROR"
 
-
-    # Visit a parse tree produced by YAPLParser#equal.
-    def visitEqual(self, ctx:YAPLParser.EqualContext):
+    # Visit a parse tree produced by YAPLParser#compare.
+    def visitCompare(self, ctx:YAPLParser.CompareContext):
         print('CONTEXT', ctx.getText())
         results = []
-        for equal_node in ctx.expr():
-            results.append(self.visit(equal_node))
+        for compare_node in ctx.expr():
+            results.append(self.visit(compare_node))
         left = results[0]
         right = results[-1]
         #if the type of the left and right side are not the same, then add an error
 
         if left != right:
-            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            typeErrorMsg ="Comparison between " + left + " and " + right
+            self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
             return "ERROR"
         else:
             return "BOOL"
@@ -188,7 +185,7 @@ class YAPL(ParseTreeVisitor):
         print('RESULTS', result)
         #if they are integers, then return an error
         if result == "INTEGER":
-            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            self.errors_list.append(MyErrorVisitor(ctx, "Not applied to Int instead of Bool"))
             return "ERROR"
         else:
             return "BOOL"
@@ -199,25 +196,9 @@ class YAPL(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by YAPLParser#lesseq.
-    def visitLesseq(self, ctx:YAPLParser.LesseqContext):
-        print('CONTEXT', ctx.getText())
-        results = []
-        for lesseq_node in ctx.expr():
-            results.append(self.visit(lesseq_node))
-        left = results[0]
-        right = results[-1]
-        #if the type of the left and right side are not the same, then add an error
-        if left != right:
-            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
-            return "ERROR"
-        else:
-            return "BOOL"
-
-
     # Visit a parse tree produced by YAPLParser#true.
     def visitTrue(self, ctx:YAPLParser.TrueContext):
-        return self.visitChildren(ctx)
+        return "BOOL"
 
 
     # Visit a parse tree produced by YAPLParser#let.

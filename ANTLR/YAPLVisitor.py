@@ -39,6 +39,11 @@ class YAPLVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by YAPLParser#compare.
+    def visitCompare(self, ctx:YAPLParser.CompareContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by YAPLParser#curly.
     def visitCurly(self, ctx:YAPLParser.CurlyContext):
         return self.visitChildren(ctx)
@@ -56,11 +61,6 @@ class YAPLVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#false.
     def visitFalse(self, ctx:YAPLParser.FalseContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by YAPLParser#less.
-    def visitLess(self, ctx:YAPLParser.LessContext):
         return self.visitChildren(ctx)
 
 
@@ -89,11 +89,6 @@ class YAPLVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by YAPLParser#equal.
-    def visitEqual(self, ctx:YAPLParser.EqualContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by YAPLParser#not.
     def visitNot(self, ctx:YAPLParser.NotContext):
         return self.visitChildren(ctx)
@@ -101,11 +96,6 @@ class YAPLVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#paren.
     def visitParen(self, ctx:YAPLParser.ParenContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by YAPLParser#lesseq.
-    def visitLesseq(self, ctx:YAPLParser.LesseqContext):
         return self.visitChildren(ctx)
 
 
