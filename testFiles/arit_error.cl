@@ -10,6 +10,12 @@ class Main inherits IO {
   i: Bool <- "Hi" < true;
   j: Bool <- 2 <= false;
   k: Bool <- 5 = "Bye";
+  m: Bool <- "Hi" + "Hello";
+  m: Bool <- "Hi" - "Hello";
+  n: Bool <- "Hi" * "Hello";
+  o: Bool <- "Hi" / "Hello";
+  p: String <- not "Bye";
+  q: String <- ~ "Goodbye";
     main() : Object { 
       out_int("HELLO")
     } ; 

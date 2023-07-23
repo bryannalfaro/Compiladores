@@ -11,6 +11,9 @@ class Main inherits IO {
   j: Bool <- true = false;
   k: Bool <- not true;
   l: Bool <- ~ false;
+  m: Bool <- "Hi" < "Hello";
+  m: Bool <- "Hi" <= "Hello";
+  n: Bool <- "Hi" = "Hello";
 
     main() : Object { 
       out_int("HELLO")

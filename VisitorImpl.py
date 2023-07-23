@@ -80,6 +80,12 @@ class YAPL(ParseTreeVisitor):
             elif left == "BOOL":
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
                 return "ERROR"
+            elif left == "STRING":
+                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on String String instead of Ints"))
+                return "ERROR"
+            else:
+                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic type mismatch"))
+                return "ERROR"
 
     # Visit a parse tree produced by YAPLParser#negation.
     def visitNegation(self, ctx:YAPLParser.NegationContext):
@@ -90,8 +96,11 @@ class YAPL(ParseTreeVisitor):
             return "INTEGER"
         elif result == "BOOL":
             return "BOOL"
+        elif result == "STRING":
+            self.errors_list.append(MyErrorVisitor(ctx, "Negate applied to String instead of Int"))
+            return "ERROR"
         else:
-            self.errors_list.append(MyErrorVisitor(ctx, "Type mismatch"))
+            self.errors_list.append(MyErrorVisitor(ctx, "Negate applied to invalid type"))
             return "ERROR"
 
 
@@ -157,6 +166,12 @@ class YAPL(ParseTreeVisitor):
             elif left == "BOOL":
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
                 return "ERROR"
+            elif left == "STRING":
+                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on String String instead of Ints"))
+                return "ERROR"
+            else:
+                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic type mismatch"))
+                return "ERROR"
 
     # Visit a parse tree produced by YAPLParser#compare.
     def visitCompare(self, ctx:YAPLParser.CompareContext):
@@ -186,6 +201,9 @@ class YAPL(ParseTreeVisitor):
         #if they are integers, then return an error
         if result == "INTEGER":
             self.errors_list.append(MyErrorVisitor(ctx, "Not applied to Int instead of Bool"))
+            return "ERROR"
+        elif result == "STRING":
+            self.errors_list.append(MyErrorVisitor(ctx, "Not applied to String instead of Bool"))
             return "ERROR"
         else:
             return "BOOL"
