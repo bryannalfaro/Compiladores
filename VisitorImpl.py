@@ -126,7 +126,12 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#while.
     def visitWhile(self, ctx:YAPLParser.WhileContext):
-        return self.visitChildren(ctx)
+        compareExpression = self.visit(ctx.children[1])
+        if compareExpression == "BOOL":
+            return "BOOL"
+        else:
+            self.errors_list.append(MyErrorVisitor(ctx, "Predicate has type " + compareExpression + " instead of BOOL"))
+            return "ERROR"
 
 
     # Visit a parse tree produced by YAPLParser#int.
@@ -231,7 +236,12 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#if.
     def visitIf(self, ctx:YAPLParser.IfContext):
-        return self.visitChildren(ctx)
+        compareExpression = self.visit(ctx.children[1])
+        if compareExpression == "BOOL":
+            return "BOOL"
+        else:
+            self.errors_list.append(MyErrorVisitor(ctx, "Conditional has type " + compareExpression + " instead of BOOL"))
+            return "ERROR"
 
 
     # Visit a parse tree produced by YAPLParser#assign.
