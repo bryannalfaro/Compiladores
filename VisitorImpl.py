@@ -53,8 +53,8 @@ class YAPL(ParseTreeVisitor):
             'category': 'CLASS',
             'size': 0,
             'data': {
-                'parent': classParent
-            }
+                'parent': classParent,
+            },
         }
         print('CLASS SYMBOL', symbol)
         return self.visitChildren(ctx)
@@ -78,8 +78,9 @@ class YAPL(ParseTreeVisitor):
             'data': {
                 'name': functionName,
                 'attributeCount': attributeCount,
-                'attributes': attributes
-            }
+                'attributes': attributes,
+                'scope': None,
+            },
         }
         print('FUNCTION SYMBOL', symbol)
         return self.visitChildren(ctx)
@@ -96,8 +97,9 @@ class YAPL(ParseTreeVisitor):
             'size': 0,
             'data': {
                 'name': variableName,
-                'value': variableValue
-            }
+                'value': variableValue,
+                'scope': None,
+            },
         }
         print('VARIABLE SYMBOL', symbol)
         return self.visitChildren(ctx)
@@ -109,8 +111,8 @@ class YAPL(ParseTreeVisitor):
         attributeType = ctx.children[2].getText()
         attribute = {
             'name': attributeName,
-            'type': attributeType
-        }
+            'type': attributeType,
+        },
         return attribute
 
 
