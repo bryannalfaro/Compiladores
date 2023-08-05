@@ -63,10 +63,12 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#function.
     def visitFunction(self, ctx:YAPLParser.FunctionContext):
         functionName = ctx.children[0].getText()
+        # Attribute count takes 8 (no attributes) from the children length, and then it ignores commas
         attributeCount = 0 if len(ctx.children) == 8 else int(((len(ctx.children) - 8) / 2) + 0.5)
         functionType = ctx.children[-4].getText()
         attributes = []
         for i in range(2, 2 * attributeCount + 1, 2):
+            # Visiting all attributes (Formal)
             attributes.append(self.visit(ctx.children[i]))
 
         symbol = {
