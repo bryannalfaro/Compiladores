@@ -334,15 +334,28 @@ class YAPLParser ( Parser ):
             super().__init__(parent, invokingState)
             self.parser = parser
 
+
+        def getRuleIndex(self):
+            return YAPLParser.RULE_feature
+
+     
+        def copyFrom(self, ctx:ParserRuleContext):
+            super().copyFrom(ctx)
+
+
+
+    class FunctionContext(FeatureContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a YAPLParser.FeatureContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
         def ID(self):
             return self.getToken(YAPLParser.ID, 0)
-
         def TYPE(self):
             return self.getToken(YAPLParser.TYPE, 0)
-
         def expr(self):
             return self.getTypedRuleContext(YAPLParser.ExprContext,0)
-
 
         def formal(self, i:int=None):
             if i is None:
@@ -351,26 +364,50 @@ class YAPLParser ( Parser ):
                 return self.getTypedRuleContext(YAPLParser.FormalContext,i)
 
 
-        def ASSIGN_OP(self):
-            return self.getToken(YAPLParser.ASSIGN_OP, 0)
-
-        def getRuleIndex(self):
-            return YAPLParser.RULE_feature
-
         def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterFeature" ):
-                listener.enterFeature(self)
+            if hasattr( listener, "enterFunction" ):
+                listener.enterFunction(self)
 
         def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitFeature" ):
-                listener.exitFeature(self)
+            if hasattr( listener, "exitFunction" ):
+                listener.exitFunction(self)
 
         def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitFeature" ):
-                return visitor.visitFeature(self)
+            if hasattr( visitor, "visitFunction" ):
+                return visitor.visitFunction(self)
             else:
                 return visitor.visitChildren(self)
 
+
+    class VariableContext(FeatureContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a YAPLParser.FeatureContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def ID(self):
+            return self.getToken(YAPLParser.ID, 0)
+        def TYPE(self):
+            return self.getToken(YAPLParser.TYPE, 0)
+        def ASSIGN_OP(self):
+            return self.getToken(YAPLParser.ASSIGN_OP, 0)
+        def expr(self):
+            return self.getTypedRuleContext(YAPLParser.ExprContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterVariable" ):
+                listener.enterVariable(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitVariable" ):
+                listener.exitVariable(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitVariable" ):
+                return visitor.visitVariable(self)
+            else:
+                return visitor.visitChildren(self)
 
 
 
@@ -384,6 +421,7 @@ class YAPLParser ( Parser ):
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,6,self._ctx)
             if la_ == 1:
+                localctx = YAPLParser.FunctionContext(self, localctx)
                 self.enterOuterAlt(localctx, 1)
                 self.state = 34
                 self.match(YAPLParser.ID)
@@ -424,6 +462,7 @@ class YAPLParser ( Parser ):
                 pass
 
             elif la_ == 2:
+                localctx = YAPLParser.VariableContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
                 self.state = 53
                 self.match(YAPLParser.ID)

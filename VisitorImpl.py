@@ -56,18 +56,60 @@ class YAPL(ParseTreeVisitor):
                 'parent': classParent
             }
         }
-        print(symbol)
+        print('CLASS SYMBOL', symbol)
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by YAPLParser#feature.
-    def visitFeature(self, ctx:YAPLParser.FeatureContext):
+    # Visit a parse tree produced by YAPLParser#function.
+    def visitFunction(self, ctx:YAPLParser.FunctionContext):
+        functionName = ctx.children[0].getText()
+        attributeCount = 0 if len(ctx.children) == 8 else int(((len(ctx.children) - 8) / 2) + 0.5)
+        functionType = ctx.children[-4].getText()
+        attributes = []
+        for i in range(2, 2 * attributeCount + 1, 2):
+            attributes.append(self.visit(ctx.children[i]))
+
+        symbol = {
+            'type': functionType,
+            'category': 'FUNCTION',
+            'size': 0,
+            'data': {
+                'name': functionName,
+                'attributeCount': attributeCount,
+                'attributes': attributes
+            }
+        }
+        print('FUNCTION SYMBOL', symbol)
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by YAPLParser#variable.
+    def visitVariable(self, ctx:YAPLParser.VariableContext):
+        variableName = ctx.children[0].getText()
+        variableType = ctx.children[2].getText()
+        variableValue = ctx.children[4].getText() if len(ctx.children) > 3 else None
+        symbol = {
+            'type': variableType,
+            'category': 'VARIABLE',
+            'size': 0,
+            'data': {
+                'name': variableName,
+                'value': variableValue
+            }
+        }
+        print('VARIABLE SYMBOL', symbol)
         return self.visitChildren(ctx)
 
 
     # Visit a parse tree produced by YAPLParser#formal.
     def visitFormal(self, ctx:YAPLParser.FormalContext):
-        return self.visitChildren(ctx)
+        attributeName = ctx.children[0].getText()
+        attributeType = ctx.children[2].getText()
+        attribute = {
+            'name': attributeName,
+            'type': attributeType
+        }
+        return attribute
 
 
     # Visit a parse tree produced by YAPLParser#plusminus.

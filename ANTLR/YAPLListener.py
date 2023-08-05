@@ -26,12 +26,21 @@ class YAPLListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by YAPLParser#feature.
-    def enterFeature(self, ctx:YAPLParser.FeatureContext):
+    # Enter a parse tree produced by YAPLParser#function.
+    def enterFunction(self, ctx:YAPLParser.FunctionContext):
         pass
 
-    # Exit a parse tree produced by YAPLParser#feature.
-    def exitFeature(self, ctx:YAPLParser.FeatureContext):
+    # Exit a parse tree produced by YAPLParser#function.
+    def exitFunction(self, ctx:YAPLParser.FunctionContext):
+        pass
+
+
+    # Enter a parse tree produced by YAPLParser#variable.
+    def enterVariable(self, ctx:YAPLParser.VariableContext):
+        pass
+
+    # Exit a parse tree produced by YAPLParser#variable.
+    def exitVariable(self, ctx:YAPLParser.VariableContext):
         pass
 
 

@@ -2,8 +2,8 @@ grammar YAPL;
 
 program: (class_grammar ';')+;
 class_grammar: CLASS TYPE (INHERITS TYPE)? '{' (feature ';')* '}';
-feature: ID '(' (formal (',' formal)*)?')' ':' TYPE '{' expr '}'
-| ID ':' TYPE (ASSIGN_OP expr)?;
+feature: ID '(' (formal (',' formal)*)?')' ':' TYPE '{' expr '}' # function
+| ID ':' TYPE (ASSIGN_OP expr)? # variable;
 formal: ID ':' TYPE;
 expr: ID ASSIGN_OP expr # assign
 | expr('@'TYPE)?'.'ID '(' (expr (',' expr)*)? ')' # bigexpr
