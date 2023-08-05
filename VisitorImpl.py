@@ -45,6 +45,18 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#class_grammar.
     def visitClass_grammar(self, ctx:YAPLParser.Class_grammarContext):
+        classType = ctx.children[1].getText()
+        classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else None
+
+        symbol = {
+            'type': classType,
+            'category': 'CLASS',
+            'size': 0,
+            'data': {
+                'parent': classParent
+            }
+        }
+        print(symbol)
         return self.visitChildren(ctx)
 
 
