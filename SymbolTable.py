@@ -40,7 +40,18 @@ class SymbolTable():
         self.table.append(TableEntry(category, type, width, offset, data))
 
     def get(self, name):
-        return self.table[name]
+        for entry in self.table:
+            if entry.category == name:
+                return entry
+        return None
+
+    def getNumberOfEntries(self,name):
+        count = 0
+        for entry in self.table:
+            if entry.category == name:
+                count += 1
+        return count
+
 
     def set(self, name, value):
         self.table[name] = value

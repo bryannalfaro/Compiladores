@@ -12,7 +12,15 @@ class YAPL(ParseTreeVisitor):
         self.errors_list = []
      # Visit a parse tree produced by YAPLParser#program.
     def visitProgram(self, ctx:YAPLParser.ProgramContext):
-        return self.visitChildren(ctx)
+        
+        self.visitChildren(ctx)
+        #search for the main class and it has to be just one
+        counterMain = self.symbol_table.getNumberOfEntries("Main")
+        if counterMain != 1:
+            self.errors_list.append(MyErrorVisitor(ctx, "There must be one Main class"))
+            
+            cprint("Number of Main classes: " + str(counterMain),"red")
+        
 
 
     # Visit a parse tree produced by YAPLParser#class_grammar.

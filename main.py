@@ -46,10 +46,10 @@ def evaluate_expression(input_str):
         return None
     else:
       #command to show tree
-      command = f"antlr4-parse YAPL.g4 program -gui"
-      process = os.popen(command, 'w')
-      process.write(input_string)
-      process.close()
+    #   command = f"antlr4-parse YAPL.g4 program -gui"
+    #   process = os.popen(command, 'w')
+    #   process.write(input_string)
+    #   process.close()
       visitor.visit(tree)
       #see errors
       if len(visitor.errors_list) > 0:
