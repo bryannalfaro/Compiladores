@@ -58,6 +58,8 @@ def evaluate_expression(input_str):
             print(error)
       else:
           cprint("No type errors found","green")
+          #print the symbol table
+          visitor.symbol_table.printTable()
       return None
 
     

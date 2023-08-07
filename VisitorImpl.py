@@ -2,41 +2,13 @@ from antlr4 import *
 from ANTLR.YAPLParser import YAPLParser
 from listenerError import MyErrorVisitor
 from termcolor import cprint    
-class HelloWorld(ParseTreeVisitor):
-    def visitStart(self, ctx):
-        return self.visit(ctx.expression())
-
-    def visitExpression(self, ctx):
-        left = self.visit(ctx.term(0))
-        for i in range(1, len(ctx.term())):
-            operator = ctx.getChild(2 * i - 1).getText()
-            right = self.visit(ctx.term(i))
-            if operator == '+':
-                left += right
-            else:
-                left -= right
-        return left
-
-    def visitTerm(self, ctx):
-        left = self.visit(ctx.factor(0))
-        for i in range(1, len(ctx.factor())):
-            operator = ctx.getChild(2 * i - 1).getText()
-            right = self.visit(ctx.factor(i))
-            if operator == '*':
-                left *= right
-            else:
-                left /= right
-        return left
-
-    def visitFactor(self, ctx):
-        if ctx.NUMBER():
-            return int(ctx.NUMBER().getText())
-        else:
-            return self.visit(ctx.expression())
+from SymbolTable import SymbolTable
 
 class YAPL(ParseTreeVisitor):
     def __init__(self):
         super().__init__()
+        self.symbol_table = SymbolTable()
+        self.symbol_table.initialize()
         self.errors_list = []
      # Visit a parse tree produced by YAPLParser#program.
     def visitProgram(self, ctx:YAPLParser.ProgramContext):
@@ -45,18 +17,11 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#class_grammar.
     def visitClass_grammar(self, ctx:YAPLParser.Class_grammarContext):
+
         classType = ctx.children[1].getText()
         classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else None
 
-        symbol = {
-            'type': classType,
-            'category': 'CLASS',
-            'size': 0,
-            'data': {
-                'parent': classParent,
-            },
-        }
-        print('CLASS SYMBOL', symbol)
+        self.symbol_table.add(classType, 'CLASS', 0, 0, {'parent': classParent})
         return self.visitChildren(ctx)
 
 
@@ -71,18 +36,7 @@ class YAPL(ParseTreeVisitor):
             # Visiting all attributes (Formal)
             attributes.append(self.visit(ctx.children[i]))
 
-        symbol = {
-            'type': functionType,
-            'category': 'FUNCTION',
-            'size': 0,
-            'data': {
-                'name': functionName,
-                'attributeCount': attributeCount,
-                'attributes': attributes,
-                'scope': None,
-            },
-        }
-        print('FUNCTION SYMBOL', symbol)
+        self.symbol_table.add(functionType, 'FUNCTION', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': None})
         return self.visitChildren(ctx)
 
 
@@ -91,17 +45,8 @@ class YAPL(ParseTreeVisitor):
         variableName = ctx.children[0].getText()
         variableType = ctx.children[2].getText()
         variableValue = ctx.children[4].getText() if len(ctx.children) > 3 else None
-        symbol = {
-            'type': variableType,
-            'category': 'VARIABLE',
-            'size': 0,
-            'data': {
-                'name': variableName,
-                'value': variableValue,
-                'scope': None,
-            },
-        }
-        print('VARIABLE SYMBOL', symbol)
+        
+        self.symbol_table.add(variableType, 'VARIABLE', 0, 0, {'name': variableName, 'value': variableValue, 'scope': None})
         return self.visitChildren(ctx)
 
 
