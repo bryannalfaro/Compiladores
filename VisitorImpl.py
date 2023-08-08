@@ -28,7 +28,11 @@ class YAPL(ParseTreeVisitor):
 
         classType = ctx.children[1].getText()
         classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else None
-
+        #Main class can not inherit from another class
+        if classType == "Main" and classParent != None:
+            self.errors_list.append(MyErrorVisitor(ctx, "Main class can not inherit from another class"))
+            self.visitChildren(ctx)
+            return "ERROR"
         self.symbol_table.add(classType, 'CLASS', 0, 0, {'parent': classParent})
         return self.visitChildren(ctx)
 
