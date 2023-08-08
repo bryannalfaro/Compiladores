@@ -1,4 +1,4 @@
-class Main{ 
+class Main inherits IO{ 
   a: Int <- 5;
   c: Int <- 5 + 2;
     main() : Object { 

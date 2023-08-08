@@ -10,6 +10,11 @@ class YAPL(ParseTreeVisitor):
         self.symbol_table = SymbolTable()
         self.symbol_table.initialize()
         self.errors_list = []
+        self.defaultValues = {
+            IntType: 0,
+            BoolType: False,
+            StringType: ""
+        }
      # Visit a parse tree produced by YAPLParser#program.
     def visitProgram(self, ctx:YAPLParser.ProgramContext):
         
@@ -56,8 +61,16 @@ class YAPL(ParseTreeVisitor):
     def visitVariable(self, ctx:YAPLParser.VariableContext):
         variableName = ctx.children[0].getText()
         variableType = ctx.children[2].getText()
-        variableValue = ctx.children[4].getText() if len(ctx.children) > 3 else None
+        #evaluate the value to assign default values
+        if len(ctx.children) > 3:
+            variableValue = ctx.children[4].getText()
+        elif variableType in self.defaultValues:
+            variableValue = self.defaultValues[variableType]
+        else:
+            variableValue = None
         
+            
+
         self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': None})
         return self.visitChildren(ctx)
 
@@ -66,9 +79,14 @@ class YAPL(ParseTreeVisitor):
     def visitFormal(self, ctx:YAPLParser.FormalContext):
         attributeName = ctx.children[0].getText()
         attributeType = ctx.children[2].getText()
+        if attributeType in self.defaultValues:
+            attributeValue = self.defaultValues[attributeType]
+        else:
+            attributeValue = None
         attribute = {
             'name': attributeName,
             'type': attributeType,
+            'value': attributeValue
         },
         return attribute
 
@@ -241,6 +259,19 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#let.
     def visitLet(self, ctx:YAPLParser.LetContext):
+        variableName = ctx.children[1].getText()
+        variableType = ctx.children[2].getText()
+        #evaluate the value to assign default values
+        if len(ctx.children) > 3:
+            variableValue = ctx.children[5].getText()
+        elif variableType in self.defaultValues:
+            variableValue = self.defaultValues[variableType]
+        else:
+            variableValue = None
+        
+            
+
+        self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': None})
         return self.visitChildren(ctx)
 
 
