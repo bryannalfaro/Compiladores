@@ -1,6 +1,6 @@
 class Main{ 
   a: Int <- 5;
-  c: Int <- 5 + true;
+  c: Int <- 5 + 2;
     main() : Object { 
       out_int(b)
 
@@ -8,7 +8,7 @@ class Main{
 
 } ; 
 
-class Main {
+class Trial {
 	sum(a:Int, b:Int, c:Int) : Int {
   		1+2
   	};

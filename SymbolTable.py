@@ -1,3 +1,15 @@
+StringType = "String"
+IntType = "Int"
+BoolType = "Bool"
+ObjectType = "Object"
+IOType = "IO"
+SELF_TYPE = "SELF_TYPE"
+ErrorType = "Error"
+
+
+
+
+
 class TableEntry():
     def __init__(self, category, type, width, offset, data):
         self.category = category
@@ -15,24 +27,24 @@ class SymbolTable():
 
     def initialize(self):
         # Initialize the symbol table with the predefined functions
-        self.table.append(TableEntry("out_string","SELF_TYPE", 0,0, {"parent": "IO", "params": ["String"], "return_type": "SELF_TYPE", "scope": "global"}))
-        self.table.append(TableEntry("out_int","SELF_TYPE", 0,0, {"parent": "IO", "params": ["Int"], "return_type": "SELF_TYPE", "scope": "global"}))
-        self.table.append(TableEntry("in_string","String", 0,0, {"parent": "IO", "params": [], "return_type": "String", "scope": "global"}))
-        self.table.append(TableEntry("in_int","Int", 0,0, {"parent": "IO", "params": [], "return_type": "Int", "scope": "global"}))
-        self.table.append(TableEntry("length","Int", 0,0, {"parent": "String", "params": [], "return_type": "Int", "scope": "global"}))
-        self.table.append(TableEntry("concat","String", 0,0, {"parent": "String", "params": ["String"], "return_type": "String", "scope": "global"}))
-        self.table.append(TableEntry("substr","String", 0,0, {"parent": "String", "params": ["Int", "Int"], "return_type": "String", "scope": "global"}))
+        self.table.append(TableEntry("out_string",SELF_TYPE, 0,0, {"parent": IOType, "params": [StringType], "return_type": SELF_TYPE, "scope": "global"}))
+        self.table.append(TableEntry("out_int",SELF_TYPE, 0,0, {"parent": IOType, "params": ["Int"], "return_type": SELF_TYPE, "scope": "global"}))
+        self.table.append(TableEntry("in_string",StringType, 0,0, {"parent": IOType, "params": [], "return_type": StringType, "scope": "global"}))
+        self.table.append(TableEntry("in_int",IntType, 0,0, {"parent": IOType, "params": [], "return_type": IntType, "scope": "global"}))
+        self.table.append(TableEntry("length",IntType, 0,0, {"parent": StringType, "params": [], "return_type": IntType, "scope": "global"}))
+        self.table.append(TableEntry("concat",StringType, 0,0, {"parent": StringType, "params": [StringType], "return_type": StringType, "scope": "global"}))
+        self.table.append(TableEntry("substr",StringType, 0,0, {"parent": StringType, "params": [IntType, IntType], "return_type": StringType, "scope": "global"}))
 
         #Add Object class
-        self.table.append(TableEntry("Object","class", 0,0, {"parent": "no_parent", "params": [], "return_type": "Object", "scope": "global"}))
+        self.table.append(TableEntry(ObjectType,"class", 0,0, {"parent": "no_parent", "params": [], "return_type": ObjectType, "scope": "global"}))
         #Add IO class
-        self.table.append(TableEntry("IO","class", 0,0, {"parent": "Object", "params": [], "return_type": "IO", "scope": "global"}))
+        self.table.append(TableEntry(IOType,"class", 0,0, {"parent": ObjectType, "params": [], "return_type": IOType, "scope": "global"}))
         #Add Int class
-        self.table.append(TableEntry("Int","class", 0,0, {"parent": "Object", "params": [], "return_type": "Int", "scope": "global"}))
+        self.table.append(TableEntry(IntType,"class", 0,0, {"parent": ObjectType, "params": [], "return_type": IntType, "scope": "global"}))
         #Add Bool class
-        self.table.append(TableEntry("Bool","class", 0,0, {"parent": "Object", "params": [], "return_type": "Bool", "scope": "global"}))
+        self.table.append(TableEntry(BoolType,"class", 0,0, {"parent": ObjectType, "params": [], "return_type": BoolType, "scope": "global"}))
         #Add String class
-        self.table.append(TableEntry("String","class", 0,0, {"parent": "Object", "params": [], "return_type": "String", "scope": "global"}))
+        self.table.append(TableEntry(StringType,"class", 0,0, {"parent": ObjectType, "params": [], "return_type": StringType, "scope": "global"}))
 
 
 

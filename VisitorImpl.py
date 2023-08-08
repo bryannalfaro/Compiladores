@@ -2,7 +2,7 @@ from antlr4 import *
 from ANTLR.YAPLParser import YAPLParser
 from listenerError import MyErrorVisitor
 from termcolor import cprint    
-from SymbolTable import SymbolTable
+from SymbolTable import *
 
 class YAPL(ParseTreeVisitor):
     def __init__(self):
@@ -32,8 +32,8 @@ class YAPL(ParseTreeVisitor):
         if classType == "Main" and classParent != None:
             self.errors_list.append(MyErrorVisitor(ctx, "Main class can not inherit from another class"))
             self.visitChildren(ctx)
-            return "ERROR"
-        self.symbol_table.add(classType, 'CLASS', 0, 0, {'parent': classParent})
+            return ErrorType
+        self.symbol_table.add(classType, 'class', 0, 0, {'parent': classParent})
         return self.visitChildren(ctx)
 
 
@@ -48,7 +48,7 @@ class YAPL(ParseTreeVisitor):
             # Visiting all attributes (Formal)
             attributes.append(self.visit(ctx.children[i]))
 
-        self.symbol_table.add(functionType, 'FUNCTION', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': None})
+        self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': None})
         return self.visitChildren(ctx)
 
 
@@ -58,7 +58,7 @@ class YAPL(ParseTreeVisitor):
         variableType = ctx.children[2].getText()
         variableValue = ctx.children[4].getText() if len(ctx.children) > 3 else None
         
-        self.symbol_table.add(variableType, 'VARIABLE', 0, 0, {'name': variableName, 'value': variableValue, 'scope': None})
+        self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': None})
         return self.visitChildren(ctx)
 
 
@@ -88,35 +88,35 @@ class YAPL(ParseTreeVisitor):
         if left != right:
             typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
             self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
-            return "ERROR"
+            return ErrorType
         else:
-            if left == "INTEGER":
-                return "INTEGER"
-            elif left == "BOOL":
+            if left == IntType:
+                return IntType
+            elif left == BoolType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
-                return "ERROR"
-            elif left == "STRING":
+                return ErrorType
+            elif left == StringType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on String String instead of Ints"))
-                return "ERROR"
+                return ErrorType
             else:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic type mismatch"))
-                return "ERROR"
+                return ErrorType
 
     # Visit a parse tree produced by YAPLParser#negation.
     def visitNegation(self, ctx:YAPLParser.NegationContext):
         print('CONTEXT', ctx.getText())
         result = self.visit(ctx.expr())
         #check if the type is an integer
-        if result == "INTEGER":
-            return "INTEGER"
-        elif result == "BOOL":
-            return "BOOL"
-        elif result == "STRING":
+        if result == IntType:
+            return IntType
+        elif result == BoolType:
+            return BoolType
+        elif result == StringType:
             self.errors_list.append(MyErrorVisitor(ctx, "Negate applied to String instead of Int"))
-            return "ERROR"
+            return ErrorType
         else:
             self.errors_list.append(MyErrorVisitor(ctx, "Negate applied to invalid type"))
-            return "ERROR"
+            return ErrorType
 
 
     # Visit a parse tree produced by YAPLParser#curly.
@@ -126,7 +126,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#string.
     def visitString(self, ctx:YAPLParser.StringContext):
-        return "STRING"
+        return StringType
 
 
     # Visit a parse tree produced by YAPLParser#isvoid.
@@ -136,22 +136,22 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#false.
     def visitFalse(self, ctx:YAPLParser.FalseContext):
-        return "BOOL"
+        return BoolType
 
 
     # Visit a parse tree produced by YAPLParser#while.
     def visitWhile(self, ctx:YAPLParser.WhileContext):
         compareExpression = self.visit(ctx.children[1])
-        if compareExpression == "BOOL":
-            return "BOOL"
+        if compareExpression == BoolType:
+            return BoolType
         else:
             self.errors_list.append(MyErrorVisitor(ctx, "Predicate has type " + compareExpression + " instead of BOOL"))
-            return "ERROR"
+            return ErrorType
 
 
     # Visit a parse tree produced by YAPLParser#int.
     def visitInt(self, ctx:YAPLParser.IntContext):
-        return "INTEGER"
+        return IntType
 
 
     # Visit a parse tree produced by YAPLParser#call.
@@ -167,7 +167,7 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#timesdiv.
     def visitTimesdiv(self, ctx:YAPLParser.TimesdivContext):
         #get the type of the left and right side
-        print('CONTEXT', ctx.getText())
+        #print('CONTEXT', ctx.getText())
         results = []
         for times_node in ctx.expr():
             print('PLUS NODE', times_node.getText()  )
@@ -179,19 +179,19 @@ class YAPL(ParseTreeVisitor):
         if left != right:
             typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
             self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
-            return "ERROR"
+            return ErrorType
         else:
-            if left == "INTEGER":
-                return "INTEGER"
-            elif left == "BOOL":
+            if left == IntType:
+                return IntType
+            elif left == BoolType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
-                return "ERROR"
-            elif left == "STRING":
+                return ErrorType
+            elif left == StringType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on String String instead of Ints"))
-                return "ERROR"
+                return ErrorType
             else:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic type mismatch"))
-                return "ERROR"
+                return ErrorType
 
     # Visit a parse tree produced by YAPLParser#compare.
     def visitCompare(self, ctx:YAPLParser.CompareContext):
@@ -206,9 +206,9 @@ class YAPL(ParseTreeVisitor):
         if left != right:
             typeErrorMsg ="Comparison between " + left + " and " + right
             self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
-            return "ERROR"
+            return ErrorType
         else:
-            return "BOOL"
+            return BoolType
 
 
     # Visit a parse tree produced by YAPLParser#not.
@@ -219,14 +219,14 @@ class YAPL(ParseTreeVisitor):
         result = self.visit(ctx.expr())
         print('RESULTS', result)
         #if they are integers, then return an error
-        if result == "INTEGER":
+        if result == IntType:
             self.errors_list.append(MyErrorVisitor(ctx, "Not applied to Int instead of Bool"))
-            return "ERROR"
-        elif result == "STRING":
+            return ErrorType
+        elif result == StringType:
             self.errors_list.append(MyErrorVisitor(ctx, "Not applied to String instead of Bool"))
-            return "ERROR"
+            return ErrorType
         else:
-            return "BOOL"
+            return BoolType
 
 
     # Visit a parse tree produced by YAPLParser#paren.
@@ -236,7 +236,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#true.
     def visitTrue(self, ctx:YAPLParser.TrueContext):
-        return "BOOL"
+        return BoolType
 
 
     # Visit a parse tree produced by YAPLParser#let.
@@ -252,11 +252,11 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#if.
     def visitIf(self, ctx:YAPLParser.IfContext):
         compareExpression = self.visit(ctx.children[1])
-        if compareExpression == "BOOL":
-            return "BOOL"
+        if compareExpression == BoolType:
+            return BoolType
         else:
             self.errors_list.append(MyErrorVisitor(ctx, "Conditional has type " + compareExpression + " instead of BOOL"))
-            return "ERROR"
+            return ErrorType
 
 
     # Visit a parse tree produced by YAPLParser#assign.
