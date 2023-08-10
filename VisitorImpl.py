@@ -97,16 +97,22 @@ class YAPL(ParseTreeVisitor):
         print('CONTEXT', ctx.getText())
         results = []
         for plus_node in ctx.expr():
-            print('PLUS NODE', plus_node.getText()  )
+            print('PLUS NODE', plus_node.getText(), type(plus_node)  )
             results.append(self.visit(plus_node))
         print('RESULTS', results)
         left = results[0]
         right = results[-1]
         #if the type of the left and right side are not the same, then add an error
         if left != right:
-            typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
-            self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
-            return ErrorType
+            #make implicit casting of bool to int
+            if left == BoolType and right == IntType:
+                return IntType
+            elif left == IntType and right == BoolType:
+                return IntType
+            else:
+                typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
+                self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
+                return ErrorType
         else:
             if left == IntType:
                 return IntType
@@ -195,9 +201,15 @@ class YAPL(ParseTreeVisitor):
         right = results[-1]
         #if the type of the left and right side are not the same, then add an error
         if left != right:
-            typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
-            self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
-            return ErrorType
+            #make implicit casting of bool to int
+            if left == BoolType and right == IntType:
+                return IntType
+            elif left == IntType and right == BoolType:
+                return IntType
+            else:
+                typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
+                self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
+                return ErrorType
         else:
             if left == IntType:
                 return IntType
@@ -268,8 +280,7 @@ class YAPL(ParseTreeVisitor):
             variableValue = self.defaultValues[variableType]
         else:
             variableValue = None
-        
-            
+    
 
         self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': None})
         return self.visitChildren(ctx)
@@ -277,7 +288,18 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#id.
     def visitId(self, ctx:YAPLParser.IdContext):
-        return self.visitChildren(ctx)
+        print('CONTEXT ID', ctx.getText())
+
+        #search for the variable in the symbol table 
+        #@TODO verificar scope al tenerlo 
+        variable = self.symbol_table.getVariable(ctx.getText())
+
+        if variable == None:
+            self.errors_list.append(MyErrorVisitor(ctx, "Variable " + ctx.getText() + " not declared"))
+            return ErrorType
+        else:
+            print("Found variable", variable)
+            return variable.getCategory()
 
 
     # Visit a parse tree produced by YAPLParser#if.

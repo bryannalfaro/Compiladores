@@ -1,8 +1,8 @@
-class Main inherits IO{ 
+class Main{ 
   a: Int <- 5;
-  c: Int <- 5 + 2;
+  c: Int <- 5 + a;
     main() : Object { 
-      out_int(b)
+      out_int(c)
 
     } ; 
 

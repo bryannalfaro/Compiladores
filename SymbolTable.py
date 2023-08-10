@@ -18,8 +18,8 @@ class TableEntry():
         self.offset = offset
         self.data = data # dictionary of data
 
-    def __str__(self):
-        return str(self.name) + " " + str(self.type) + " " + str(self.value)
+    def getCategory(self):
+        return self.category
 
 class SymbolTable():
     def __init__(self):
@@ -56,6 +56,12 @@ class SymbolTable():
             if entry.category == name:
                 return entry
         return None
+    
+    def getVariable(self, name):
+        for entry in self.table:
+            if entry.type == "variable":
+                if entry.data["name"] == name:
+                    return entry
 
     def getNumberOfEntries(self,name):
         count = 0
