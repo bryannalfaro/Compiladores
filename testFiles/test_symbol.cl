@@ -1,5 +1,5 @@
 class Main{ 
-  a: Int <- 5;
+  a: Int <- "hola";
   c: Int <- 5 + a;
     main() : Object { 
       out_int(c)

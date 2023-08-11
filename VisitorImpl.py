@@ -32,6 +32,11 @@ class YAPL(ParseTreeVisitor):
     def visitClass_grammar(self, ctx:YAPLParser.Class_grammarContext):
 
         classType = ctx.children[1].getText()
+        #visit features of the class
+        resultFeatures= []
+        print(len(ctx.feature()))
+        print('Val',resultFeatures)
+
         classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else None
         #Main class can not inherit from another class
         if classType == "Main" and classParent != None:
@@ -64,6 +69,12 @@ class YAPL(ParseTreeVisitor):
         #evaluate the value to assign default values
         if len(ctx.children) > 3:
             variableValue = ctx.children[4].getText()
+            valueType  = self.visit(ctx.children[4]) #Type of value to assign
+            
+            #check if the types are the same
+            if variableType != valueType:
+                self.errors_list.append(MyErrorVisitor(ctx, "Variable type mismatch"))
+                return ErrorType
         elif variableType in self.defaultValues:
             variableValue = self.defaultValues[variableType]
         else:
