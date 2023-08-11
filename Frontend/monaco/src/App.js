@@ -1,17 +1,9 @@
-import './App.css';
-import Editor from '@monaco-editor/react';
+import "./App.css";
+import Landing from "./components/LandingPage";
 function App() {
   return (
 
-    <div className="App">
-      <header className="App-header">
-        <Editor
-          height="90vh"
-          defaultLanguage="javascript"
-          theme='vs-dark'
-        />
-      </header>
-    </div>
+    <Landing />
   );
 }
 
