@@ -178,7 +178,7 @@ class YAPL(ParseTreeVisitor):
     def visitWhile(self, ctx:YAPLParser.WhileContext):
         compareExpression = self.visit(ctx.children[1])
         if compareExpression == BoolType:
-            return BoolType
+            return ObjectType
         else:
             self.errors_list.append(MyErrorVisitor(ctx, "Predicate has type " + compareExpression + " instead of BOOL"))
             return ErrorType
