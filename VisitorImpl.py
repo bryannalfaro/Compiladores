@@ -44,6 +44,10 @@ class YAPL(ParseTreeVisitor):
             self.visitChildren(ctx)
             return ErrorType
         self.symbol_table.add(classType, 'class', 0, 0, {'parent': classParent})
+        if self.symbol_table.getClassParent(classType) == classParent and classParent != None:
+            typeErrorMsg = "Inheritance cycle: " + classType + " " + classParent
+            self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
+            return ErrorType
         return self.visitChildren(ctx)
 
 
