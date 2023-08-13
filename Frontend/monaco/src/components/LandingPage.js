@@ -86,7 +86,23 @@ const Landing = () => {
    */
   const handleCompile = () => {
     setProcessing(true);
-    showSuccessToast("Compiling...");
+    showSuccessToast("Compiled Successfully!");
+    axios.post("http://localhost:5000/yapl_compile", {
+      code: code,
+      language: language.value,
+    },{
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    }).then((res) => {
+      setOutputDetails(res.data);
+      setProcessing(false);
+    }).catch((err) => {
+      console.log("err", err);
+      showErrorToast();
+      setProcessing(false);
+    });
     setOutputDetails(null);
     setProcessing(false);
     // const data = {
