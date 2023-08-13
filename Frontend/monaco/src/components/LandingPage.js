@@ -16,7 +16,35 @@ import OutputDetails from "./Details";
 import ThemeDropdown from "./Theme";
 import LanguagesDropdown from "./Dropdown";
 
-const javascriptDefault = `// some comment`;
+const javascriptDefault = `/**
+* Problem: Binary Search: Search a sorted array for a target value.
+*/
+
+// Time: O(log n)
+const binarySearch = (arr, target) => {
+ return binarySearchHelper(arr, target, 0, arr.length - 1);
+};
+
+const binarySearchHelper = (arr, target, start, end) => {
+ if (start > end) {
+   return false;
+ }
+ let mid = Math.floor((start + end) / 2);
+ if (arr[mid] === target) {
+   return mid;
+ }
+ if (arr[mid] < target) {
+   return binarySearchHelper(arr, target, mid + 1, end);
+ }
+ if (arr[mid] > target) {
+   return binarySearchHelper(arr, target, start, mid - 1);
+ }
+};
+
+const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const target = 5;
+console.log(binarySearch(arr, target));
+`;
 
 const Landing = () => {
   const [code, setCode] = useState(javascriptDefault);
@@ -52,16 +80,65 @@ const Landing = () => {
       }
     }
   };
+
+  /**
+   * @TODO this function has to change to use our API from flask
+   */
   const handleCompile = () => {
-    // We will come to the implementation later in the code
+    setProcessing(true);
+    showSuccessToast("Compiling...");
+    setOutputDetails(null);
+    setProcessing(false);
+    // const data = {
+    //   language_id: language.id,
+    //   // encode source code in base64
+    //   source_code: btoa(code),
+    //   stdin: btoa(customInput),
+    // };
+    // const options = {
+    //   method: "POST",
+    //   url: process.env.REACT_APP_RAPID_API_URL,
+    //   params: { base64_encoded: "true", fields: "*" },
+    //   headers: {
+    //     "content-type": "application/json",
+    //     "Content-Type": "application/json",
+    //   },
+    //   data,
+    // };
+
+    // axios
+    //   .request(options)
+    //   .then(function (response) {
+    //     console.log("res.data", response.data);
+    //   })
+    //   .catch((err) => {
+    //     let error = err.response ? err.response.data : err;
+    //     // get error status
+    //     let status = err.response.status;
+    //     console.log("status", status);
+    //     if (status === 429) {
+    //       console.log("too many requests", status);
+
+    //       showErrorToast(
+    //         `Quota of 100 requests exceeded for the Day! Please read the blog on freeCodeCamp to learn how to setup your own RAPID API Judge0!`,
+    //         10000
+    //       );
+    //     }
+    //     setProcessing(false);
+    //     console.log("catch block...", error);
+    //   });
   };
 
-  const checkStatus = async (token) => {
-    // We will come to the implementation later in the code
-  };
 
   function handleThemeChange(th) {
-    // We will come to the implementation later in the code
+    const theme = th;
+    console.log("theme...", theme);
+
+    if (["light", "vs-dark"].includes(theme.value)) {
+      setTheme(theme);
+    } else {
+      defineTheme(theme.value).then((_) => setTheme(theme));
+    }
   }
   useEffect(() => {
     defineTheme("oceanic-next").then((_) =>
@@ -80,10 +157,10 @@ const Landing = () => {
       progress: undefined,
     });
   };
-  const showErrorToast = (msg) => {
+  const showErrorToast = (msg, timer) => {
     toast.error(msg || `Something went wrong! Please try again.`, {
       position: "top-right",
-      autoClose: 1000,
+      autoClose: timer ? timer : 1000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
@@ -105,6 +182,7 @@ const Landing = () => {
         draggable
         pauseOnHover
       />
+
       <div className="h-4 w-full bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500"></div>
       <div className="flex flex-row">
         <div className="px-4 py-2">
