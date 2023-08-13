@@ -1,11 +1,25 @@
-class Main inherits IO { 
+class SuperInt {};
+
+class MegaInt inherits SuperInt {};
+
+class UltraInt inherits MegaInt{};
+
+class ChildInt inherits SuperInt{};
+
+class Main { 
   a: Int <- 5;
   b: Int <- 6;
+  c: UltraInt;
+  d: ChildInt;
 
     main() : Object { 
-      if false
-      then out_int(b)
-      else out_int(a)
-      fi
+      trial()
     } ; 
+  
+  	trial(): SuperInt {
+  		if false
+        then c
+        else d
+        fi
+  	};
 } ; 

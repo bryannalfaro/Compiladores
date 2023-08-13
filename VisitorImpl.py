@@ -316,8 +316,29 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#if.
     def visitIf(self, ctx:YAPLParser.IfContext):
         compareExpression = self.visit(ctx.children[1])
+        thenType = self.visit(ctx.children[3])
+        elseType = self.visit(ctx.children[5])
+
+        print("THEN:", self.symbol_table.getClassParent(thenType), "ELSE:", elseType)
+        # Defining ifType. Highest common class
+        ifType = ObjectType
+        if thenType == elseType:
+            ifType = thenType
+        else:
+            # Cycle through class parents
+            thenTempType = thenType
+            elseTempType = elseType
+            while thenTempType != None:
+                while elseTempType != None:
+                    elseTempType = self.symbol_table.getClassParent(elseTempType)
+                    if elseTempType == thenTempType:
+                        ifType = elseTempType
+                        break
+                elseTempType = elseType
+                thenTempType = self.symbol_table.getClassParent(thenTempType)
+
         if compareExpression == BoolType:
-            return BoolType
+            return ifType
         else:
             self.errors_list.append(MyErrorVisitor(ctx, "Conditional has type " + compareExpression + " instead of BOOL"))
             return ErrorType

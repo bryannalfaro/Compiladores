@@ -70,6 +70,11 @@ class SymbolTable():
                 count += 1
         return count
 
+    def getClassParent(self, name):
+        for entry in self.table:
+            if entry.category == name and entry.type == 'class':
+                return entry.data["parent"]
+
 
     def set(self, name, value):
         self.table[name] = value
