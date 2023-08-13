@@ -2,36 +2,36 @@ import React from "react";
 
 const OutputWindow = ({ outputDetails }) => {
   const getOutput = () => {
-    let statusId = outputDetails?.status?.id;
+    //Show green if result array is empty and red if not
+    return (
+      <>
+        <div className="flex flex-col">
+          <div className="flex flex-row justify-between items-center px-4 py-2">
+            <h1 className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">
+              Result
+            </h1>
+            <div
+              className={`w-4 h-4 rounded-full ${
+                outputDetails.result.length === 0
+                  ? "bg-green-500"
+                  : "bg-red-500"
+              }`}
+            ></div>
+          </div>
+          <div className="flex flex-col px-4 py-2">
+          {outputDetails.result.length === 0 ? (
+              <p className="text-white">No errors found</p>
+            ) : outputDetails.result.map((item, index) => (
+              <div key={index} className="flex flex-row">
+                <div className="w-4 h-4 rounded-full bg-gray-500 mr-2"></div>
+                <p className="text-white">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
+    );
 
-    if (statusId === 6) {
-      // compilation error
-      return (
-        <pre className="px-2 py-1 font-normal text-xs text-red-500">
-          {atob(outputDetails?.compile_output)}
-        </pre>
-      );
-    } else if (statusId === 3) {
-      return (
-        <pre className="px-2 py-1 font-normal text-xs text-green-500">
-          {atob(outputDetails.stdout) !== null
-            ? `${atob(outputDetails.stdout)}`
-            : null}
-        </pre>
-      );
-    } else if (statusId === 5) {
-      return (
-        <pre className="px-2 py-1 font-normal text-xs text-red-500">
-          {`Time Limit Exceeded`}
-        </pre>
-      );
-    } else {
-      return (
-        <pre className="px-2 py-1 font-normal text-xs text-red-500">
-          {atob(outputDetails?.stderr)}
-        </pre>
-      );
-    }
   };
   return (
     <>
