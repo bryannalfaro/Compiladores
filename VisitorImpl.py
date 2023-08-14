@@ -29,13 +29,9 @@ class YAPL(ParseTreeVisitor):
 
 
     # Visit a parse tree produced by YAPLParser#class_grammar.
-    def visitClass_grammar(self, ctx:YAPLParser.Class_grammarContext):
-
+    def visitClass_grammar(self, ctx:YAPLParser.Class_grammarContext): 
+        
         classType = ctx.children[1].getText()
-        #visit features of the class
-        resultFeatures= []
-        print(len(ctx.feature()))
-        print('Val',resultFeatures)
 
         classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else None
         #Main class can not inherit from another class
@@ -48,8 +44,20 @@ class YAPL(ParseTreeVisitor):
             typeErrorMsg = "Inheritance cycle: " + classType + " " + classParent
             self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
             return ErrorType
-        return self.visitChildren(ctx)
 
+        self.visitChildren(ctx)
+
+        #visit features of the class
+        resultFeatures= ctx.feature()
+        for feature in resultFeatures:
+            if isinstance(feature, YAPLParser.VariableContext):
+                self.featureScoping(feature.children[0].getText(), 'class.' + classType)
+            elif isinstance(feature, YAPLParser.FunctionContext):
+                self.featureScoping(feature.children[0].getText(), 'class.' + classType)
+
+    # Set Scope for feature
+    def featureScoping(self, name, scope = None):
+        self.symbol_table.setScope(name, scope)
 
     # Visit a parse tree produced by YAPLParser#function.
     def visitFunction(self, ctx:YAPLParser.FunctionContext):
@@ -61,6 +69,13 @@ class YAPL(ParseTreeVisitor):
         for i in range(2, 2 * attributeCount + 1, 2):
             # Visiting all attributes (Formal)
             attributes.append(self.visit(ctx.children[i]))
+
+        # Inheritance errors:
+            # class [name] redefines method [method] and changes number of formals
+            # class [name] redefines method [method] and changes return type (from [original] to [new])
+            # class [name] redefines method [method] and changes type of formal [formal]
+        # Non errors:
+            # Changing formal id
 
         self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': None})
         return self.visitChildren(ctx)
