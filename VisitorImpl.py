@@ -50,6 +50,10 @@ class YAPL(ParseTreeVisitor):
             typeErrorMsg = "Inheritance cycle: " + classType + " " + classParent
             self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
             return ErrorType
+        if classParent == 'Int' or classParent == 'Bool' or classParent == 'String':
+            typeErrorMsg = 'Type-check: class ' + classType + ' inherits from ' + classParent
+            self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
+            return ErrorType
 
         self.visitChildren(ctx)
         return
