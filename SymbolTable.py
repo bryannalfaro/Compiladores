@@ -101,6 +101,13 @@ class SymbolTable():
                     return entry
         return None
 
+    def getIdByScope(self, name, scope):
+        for entry in self.table:
+            if entry.type == 'variable':
+                if entry.data["name"] == name and entry.data["scope"] == scope:
+                    return entry
+        return None
+
 
     def set(self, name, value):
         self.table[name] = value

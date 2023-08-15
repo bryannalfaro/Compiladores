@@ -49,10 +49,12 @@ class YAPL(ParseTreeVisitor):
             # If the parent of the parent is the same as the classType, Inheritance
             typeErrorMsg = "Inheritance cycle: " + classType + " " + classParent
             self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
+            self.visitChildren(ctx)
             return ErrorType
         if classParent == 'Int' or classParent == 'Bool' or classParent == 'String':
             typeErrorMsg = 'Type-check: class ' + classType + ' inherits from ' + classParent
             self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
+            self.visitChildren(ctx)
             return ErrorType
 
         self.visitChildren(ctx)
@@ -85,17 +87,20 @@ class YAPL(ParseTreeVisitor):
                 if attributeCount != parentFunction.data["attributeCount"]:
                     errorMsg = 'Class ' + self.current_class + ' redefines method ' + functionName + ' and changes number of formals.'
                     self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                    self.visitChildren(ctx)
                     return ErrorType
                 # Check return type
                 if functionType != parentFunction.category:
                     errorMsg = 'Class ' + self.current_class + ' redefines method ' + functionName + ' and changes return type (from ' + parentFunction.category + ' to ' + functionType + ')'
                     self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                    self.visitChildren(ctx)
                     return ErrorType
                 # Check formal types
                 for i in range(attributeCount):
                     if attributes[i][0]["type"] != parentFunction.data["attributes"][i][0]["type"]:
                         errorMsg = 'Class ' + self.current_class + ' redefines method ' + functionName + ' and changes type of formal ' + attributes[i][0]["name"]
                         self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                        self.visitChildren(ctx)
                         return ErrorType
 
         # Check return type matches
@@ -109,12 +114,12 @@ class YAPL(ParseTreeVisitor):
                     hasMatch = True
             if not hasMatch:
                 # Return type of function body nor its parents match expected type
-                errorMsg = 'Type-Check: ' + originalExprType + ' does not conform to ' + functionType + ' in method ' + functionName
+                errorMsg = 'Type-Check: ' + str(originalExprType) + ' does not conform to ' + functionType + ' in method ' + functionName
                 self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                self.visitChildren(ctx)
                 return ErrorType
 
         self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
-        self.visitChildren(ctx)
         self.current_function = None
         return
 
@@ -131,6 +136,7 @@ class YAPL(ParseTreeVisitor):
             #check if the types are the same
             if variableType != valueType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Variable type mismatch"))
+                self.visitChildren(ctx)
                 return ErrorType
         elif variableType in self.defaultValues:
             variableValue = self.defaultValues[variableType]
@@ -176,18 +182,22 @@ class YAPL(ParseTreeVisitor):
             else:
                 typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
                 self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
+                self.visitChildren(ctx)
                 return ErrorType
         else:
             if left == IntType:
                 return IntType
             elif left == BoolType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
+                self.visitChildren(ctx)
                 return ErrorType
             elif left == StringType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on String String instead of Ints"))
+                self.visitChildren(ctx)
                 return ErrorType
             else:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic type mismatch"))
+                self.visitChildren(ctx)
                 return ErrorType
 
     # Visit a parse tree produced by YAPLParser#negation.
@@ -200,9 +210,11 @@ class YAPL(ParseTreeVisitor):
             return BoolType
         elif result == StringType:
             self.errors_list.append(MyErrorVisitor(ctx, "Negate applied to String instead of Int"))
+            self.visitChildren(ctx)
             return ErrorType
         else:
             self.errors_list.append(MyErrorVisitor(ctx, "Negate applied to invalid type"))
+            self.visitChildren(ctx)
             return ErrorType
 
 
@@ -238,6 +250,7 @@ class YAPL(ParseTreeVisitor):
             return ObjectType
         else:
             self.errors_list.append(MyErrorVisitor(ctx, "Predicate has type " + compareExpression + " instead of BOOL"))
+            self.visitChildren(ctx)
             return ErrorType
 
 
@@ -280,18 +293,22 @@ class YAPL(ParseTreeVisitor):
             else:
                 typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
                 self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
+                self.visitChildren(ctx)
                 return ErrorType
         else:
             if left == IntType:
                 return IntType
             elif left == BoolType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
+                self.visitChildren(ctx)
                 return ErrorType
             elif left == StringType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on String String instead of Ints"))
+                self.visitChildren(ctx)
                 return ErrorType
             else:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic type mismatch"))
+                self.visitChildren(ctx)
                 return ErrorType
 
     # Visit a parse tree produced by YAPLParser#compare.
@@ -306,6 +323,7 @@ class YAPL(ParseTreeVisitor):
         if left != right:
             typeErrorMsg ="Comparison between " + left + " and " + right
             self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
+            self.visitChildren(ctx)
             return ErrorType
         else:
             return BoolType
@@ -318,9 +336,11 @@ class YAPL(ParseTreeVisitor):
         #if they are integers, then return an error
         if result == IntType:
             self.errors_list.append(MyErrorVisitor(ctx, "Not applied to Int instead of Bool"))
+            self.visitChildren(ctx)
             return ErrorType
         elif result == StringType:
             self.errors_list.append(MyErrorVisitor(ctx, "Not applied to String instead of Bool"))
+            self.visitChildren(ctx)
             return ErrorType
         else:
             return BoolType
@@ -367,6 +387,7 @@ class YAPL(ParseTreeVisitor):
 
         if variable == None:
             self.errors_list.append(MyErrorVisitor(ctx, "Variable " + ctx.getText() + " not declared"))
+            self.visitChildren(ctx)
             return ErrorType
         else:
             return variable.getCategory()
@@ -399,6 +420,7 @@ class YAPL(ParseTreeVisitor):
             return ifType
         else:
             self.errors_list.append(MyErrorVisitor(ctx, "Conditional has type " + compareExpression + " instead of BOOL"))
+            self.visitChildren(ctx)
             return ErrorType
 
 
