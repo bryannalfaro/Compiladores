@@ -76,14 +76,17 @@ class SymbolTable():
                 return entry.data["parent"]
 
     def setScope(self, name, scope):
-        print("NAME:", name)
         for entry in self.table:
-            print("CATEGORY NAME", entry.category)
             if entry.type == 'function' or entry.type == 'variable':
                 if entry.data["name"] == name:
-                    print("SETTING SCOPE")
                     entry.data["scope"] = scope
                     return
+
+    def getCategory(self, name):
+        for entry in self.table:
+            if entry.type == 'function':
+                if entry.data["name"] == name:
+                    return entry.category
 
 
     def set(self, name, value):

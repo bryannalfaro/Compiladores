@@ -124,12 +124,9 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#plusminus.
     def visitPlusminus(self, ctx:YAPLParser.PlusminusContext):
         #get the type of the left and right side
-        print('CONTEXT', ctx.getText())
         results = []
         for plus_node in ctx.expr():
-            print('PLUS NODE', plus_node.getText(), type(plus_node)  )
             results.append(self.visit(plus_node))
-        print('RESULTS', results)
         left = results[0]
         right = results[-1]
         #if the type of the left and right side are not the same, then add an error
@@ -158,7 +155,6 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#negation.
     def visitNegation(self, ctx:YAPLParser.NegationContext):
-        print('CONTEXT', ctx.getText())
         result = self.visit(ctx.expr())
         #check if the type is an integer
         if result == IntType:
@@ -175,7 +171,9 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#curly.
     def visitCurly(self, ctx:YAPLParser.CurlyContext):
-        return self.visitChildren(ctx)
+        self.visitChildren(ctx)
+        # Return last expr type
+        return self.visit(ctx.children[-3])
 
 
     # Visit a parse tree produced by YAPLParser#string.
@@ -185,7 +183,10 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#isvoid.
     def visitIsvoid(self, ctx:YAPLParser.IsvoidContext):
-        return self.visitChildren(ctx)
+        self.visitChildren(ctx)
+        # Return bool evaluates to true if expr is void 
+        # and evaluates to false if expr is not void.
+        return BoolType
 
 
     # Visit a parse tree produced by YAPLParser#false.
@@ -210,12 +211,17 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#call.
     def visitCall(self, ctx:YAPLParser.CallContext):
-        return self.visitChildren(ctx)
+        self.visitChildren(ctx)
+        # Return ID type
+        callType = self.symbol_table.getCategory(ctx.children[0].getText())
+        return callType
 
 
     # Visit a parse tree produced by YAPLParser#newtype.
     def visitNewtype(self, ctx:YAPLParser.NewtypeContext):
-        return self.visitChildren(ctx)
+        self.visitChildren(ctx)
+        # Return Type
+        return self.visit(ctx.children[1])
 
 
     # Visit a parse tree produced by YAPLParser#timesdiv.
@@ -224,9 +230,7 @@ class YAPL(ParseTreeVisitor):
         #print('CONTEXT', ctx.getText())
         results = []
         for times_node in ctx.expr():
-            print('PLUS NODE', times_node.getText()  )
             results.append(self.visit(times_node))
-        print('RESULTS', results)
         left = results[0]
         right = results[-1]
         #if the type of the left and right side are not the same, then add an error
@@ -255,7 +259,6 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#compare.
     def visitCompare(self, ctx:YAPLParser.CompareContext):
-        print('CONTEXT', ctx.getText())
         results = []
         for compare_node in ctx.expr():
             results.append(self.visit(compare_node))
@@ -273,11 +276,8 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#not.
     def visitNot(self, ctx:YAPLParser.NotContext):
-        print('CONTEXT', ctx.getText())
         #get the type of the left and right side
-        print('CONTEXT', ctx.getText())
         result = self.visit(ctx.expr())
-        print('RESULTS', result)
         #if they are integers, then return an error
         if result == IntType:
             self.errors_list.append(MyErrorVisitor(ctx, "Not applied to Int instead of Bool"))
@@ -291,7 +291,9 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#paren.
     def visitParen(self, ctx:YAPLParser.ParenContext):
-        return self.visitChildren(ctx)
+        self.visitChildren(ctx)
+        # Return expr type
+        return self.visit(ctx.children[1])
 
 
     # Visit a parse tree produced by YAPLParser#true.
@@ -301,6 +303,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#let.
     def visitLet(self, ctx:YAPLParser.LetContext):
+        # Return Value of expr here: [IN expr]
         variableName = ctx.children[1].getText()
         variableType = ctx.children[2].getText()
         #evaluate the value to assign default values
@@ -313,12 +316,12 @@ class YAPL(ParseTreeVisitor):
     
 
         self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': None})
-        return self.visitChildren(ctx)
+        self.visitChildren(ctx)
+        return self.visit(ctx.children[-1])
 
 
     # Visit a parse tree produced by YAPLParser#id.
     def visitId(self, ctx:YAPLParser.IdContext):
-        print('CONTEXT ID', ctx.getText())
 
         #search for the variable in the symbol table 
         #@TODO verificar scope al tenerlo 
@@ -328,7 +331,6 @@ class YAPL(ParseTreeVisitor):
             self.errors_list.append(MyErrorVisitor(ctx, "Variable " + ctx.getText() + " not declared"))
             return ErrorType
         else:
-            print("Found variable", variable)
             return variable.getCategory()
 
 
@@ -338,7 +340,6 @@ class YAPL(ParseTreeVisitor):
         thenType = self.visit(ctx.children[3])
         elseType = self.visit(ctx.children[5])
 
-        print("THEN:", self.symbol_table.getClassParent(thenType), "ELSE:", elseType)
         # Defining ifType. Highest common class
         ifType = ObjectType
         if thenType == elseType:
@@ -365,9 +366,16 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#assign.
     def visitAssign(self, ctx:YAPLParser.AssignContext):
-        return self.visitChildren(ctx)
+        self.visitChildren(ctx)
+        # Return ID type
+        return self.visit(ctx.children[2])
 
 
     # Visit a parse tree produced by YAPLParser#bigexpr.
     def visitBigexpr(self, ctx:YAPLParser.BigexprContext):
-        return self.visitChildren(ctx)
+        self.visitChildren(ctx)
+
+        # Return ID type
+        idIndex = 4 if ctx.children[1].getText() == '@' else 2
+        bigExprType = self.symbol_table.getCategory(ctx.children[idIndex].getText())
+        return bigExprType
