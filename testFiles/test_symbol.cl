@@ -1,9 +1,13 @@
 class Main{ 
-  a: Int <- "hola";
-  c: Int <- 5 + a;
-    main() : Object { 
-      out_int(c)
+  a: Int <- 2;
+  c: Int <- 5 + a*4;
 
+ 
+
+    main() : Object { 
+      {
+       if a=1 then c<-1 else c<-3 fi;
+      }
     } ; 
 
 } ; 

@@ -62,6 +62,12 @@ class SymbolTable():
             if entry.type == "variable":
                 if entry.data["name"] == name:
                     return entry
+                
+    def setVariableValue(self, name, value):
+        for entry in self.table:
+            if entry.type == "variable":
+                if entry.data["name"] == name:
+                    entry.data["value"] = value
 
     def getNumberOfEntries(self,name):
         count = 0
