@@ -413,7 +413,7 @@ class YAPL(ParseTreeVisitor):
         self.symbol_table.setVariableValue(idValue, exprValue)
         cprint("ASSIGN: "+"ID:"+idValue+" EXPR>"+exprValue,"green")
         self.visitChildren(ctx)
-        return self.visitChildren(ctx.children[2])
+        return self.visit(ctx.children[2])
 
 
     # Visit a parse tree produced by YAPLParser#bigexpr.
