@@ -12,6 +12,15 @@ class Main {
         out_string("c");
         c;
       };
+      
+      let d: Int <- a*b in {
+        out_string("d");
+        d;
+      };
     }
   };
 } ; 
+
+class DB {
+  a: Int;
+};

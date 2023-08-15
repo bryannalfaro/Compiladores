@@ -15,6 +15,10 @@ class YAPL(ParseTreeVisitor):
             BoolType: False,
             StringType: ""
         }
+        # Global variables to set Scope
+        self.current_class = None
+        self.current_function = None
+        self.current_let = 0
      # Visit a parse tree produced by YAPLParser#program.
     def visitProgram(self, ctx:YAPLParser.ProgramContext):
         
@@ -32,6 +36,7 @@ class YAPL(ParseTreeVisitor):
     def visitClass_grammar(self, ctx:YAPLParser.Class_grammarContext): 
         
         classType = ctx.children[1].getText()
+        self.current_class = classType
 
         classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else None
         #Main class can not inherit from another class
@@ -48,12 +53,12 @@ class YAPL(ParseTreeVisitor):
         self.visitChildren(ctx)
 
         #visit features of the class
-        resultFeatures= ctx.feature()
-        for feature in resultFeatures:
-            if isinstance(feature, YAPLParser.VariableContext):
-                self.featureScoping(feature.children[0].getText(), 'class.' + classType)
-            elif isinstance(feature, YAPLParser.FunctionContext):
-                self.featureScoping(feature.children[0].getText(), 'class.' + classType)
+        # resultFeatures= ctx.feature()
+        # for feature in resultFeatures:
+        #     if isinstance(feature, YAPLParser.VariableContext):
+        #         self.featureScoping(feature.children[0].getText(), 'class.' + classType)
+        #     elif isinstance(feature, YAPLParser.FunctionContext):
+        #         self.featureScoping(feature.children[0].getText(), 'class.' + classType)
 
     # Set Scope for feature
     def featureScoping(self, name, scope = None):
@@ -62,6 +67,7 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#function.
     def visitFunction(self, ctx:YAPLParser.FunctionContext):
         functionName = ctx.children[0].getText()
+        self.current_function = functionName
         # Attribute count takes 8 (no attributes) from the children length, and then it ignores commas
         attributeCount = 0 if len(ctx.children) == 8 else int(((len(ctx.children) - 8) / 2) + 0.5)
         functionType = ctx.children[-4].getText()
@@ -77,8 +83,10 @@ class YAPL(ParseTreeVisitor):
         # Non errors:
             # Changing formal id
 
-        self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': None})
-        return self.visitChildren(ctx)
+        self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
+        self.visitChildren(ctx)
+        self.current_function = None
+        return
 
 
     # Visit a parse tree produced by YAPLParser#variable.
@@ -99,9 +107,7 @@ class YAPL(ParseTreeVisitor):
         else:
             variableValue = None
         
-            
-
-        self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': None})
+        self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
         return self.visitChildren(ctx)
 
 
@@ -116,7 +122,8 @@ class YAPL(ParseTreeVisitor):
         attribute = {
             'name': attributeName,
             'type': attributeType,
-            'value': attributeValue
+            'value': attributeValue,
+            'scope': 'local.' + self.current_class + '.' + self.current_function
         },
         return attribute
 
@@ -315,8 +322,9 @@ class YAPL(ParseTreeVisitor):
             variableValue = None
     
 
-        self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': None})
+        self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
         self.visitChildren(ctx)
+        self.current_let += 1
         return self.visit(ctx.children[-1])
 
 
