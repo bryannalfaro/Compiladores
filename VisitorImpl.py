@@ -365,6 +365,14 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#assign.
     def visitAssign(self, ctx:YAPLParser.AssignContext):
+        #get id of the assignment
+        idValue = ctx.children[0].getText()
+        #get the expression of the assignment
+        exprValue = ctx.children[2].getText()
+
+        #assing in symbol table value
+        self.symbol_table.setVariableValue(idValue, exprValue)
+        cprint("ASSIGN: "+"ID:"+idValue+" EXPR>"+exprValue,"green")
         return self.visitChildren(ctx)
 
 
