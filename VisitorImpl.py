@@ -45,24 +45,14 @@ class YAPL(ParseTreeVisitor):
             self.visitChildren(ctx)
             return ErrorType
         self.symbol_table.add(classType, 'class', 0, 0, {'parent': classParent})
-        if self.symbol_table.getClassParent(classType) == classParent and classParent != None:
+        if self.symbol_table.getClassParent(classParent) == classType and classParent != None:
+            # If the parent of the parent is the same as the classType, Inheritance
             typeErrorMsg = "Inheritance cycle: " + classType + " " + classParent
             self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
             return ErrorType
 
         self.visitChildren(ctx)
-
-        #visit features of the class
-        # resultFeatures= ctx.feature()
-        # for feature in resultFeatures:
-        #     if isinstance(feature, YAPLParser.VariableContext):
-        #         self.featureScoping(feature.children[0].getText(), 'class.' + classType)
-        #     elif isinstance(feature, YAPLParser.FunctionContext):
-        #         self.featureScoping(feature.children[0].getText(), 'class.' + classType)
-
-    # Set Scope for feature
-    def featureScoping(self, name, scope = None):
-        self.symbol_table.setScope(name, scope)
+        return
 
     # Visit a parse tree produced by YAPLParser#function.
     def visitFunction(self, ctx:YAPLParser.FunctionContext):
@@ -82,6 +72,27 @@ class YAPL(ParseTreeVisitor):
             # class [name] redefines method [method] and changes type of formal [formal]
         # Non errors:
             # Changing formal id
+
+        parentClass = self.symbol_table.getClassParent(self.current_class)
+        if parentClass != None:
+            parentFunction = self.symbol_table.getFunctionByScope(functionName, 'global.' + parentClass)
+            if parentFunction != None:
+                # Check number of formals
+                if attributeCount != parentFunction.data["attributeCount"]:
+                    errorMsg = 'Class ' + self.current_class + ' redefines method ' + functionName + ' and changes number of formals.'
+                    self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                    return ErrorType
+                # Check return type
+                if functionType != parentFunction.category:
+                    errorMsg = 'Class ' + self.current_class + ' redefines method ' + functionName + ' and changes return type (from ' + parentFunction.category + ' to ' + functionType + ')'
+                    self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                    return ErrorType
+                # Check formal types
+                for i in range(attributeCount):
+                    if attributes[i][0]["type"] != parentFunction.data["attributes"][i][0]["type"]:
+                        errorMsg = 'Class ' + self.current_class + ' redefines method ' + functionName + ' and changes type of formal ' + attributes[i][0]["name"]
+                        self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                        return ErrorType
 
         self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
         self.visitChildren(ctx)
