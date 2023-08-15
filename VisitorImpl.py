@@ -321,12 +321,30 @@ class YAPL(ParseTreeVisitor):
         #if the type of the left and right side are not the same, then add an error
 
         if left != right:
-            typeErrorMsg ="Comparison between " + left + " and " + right
-            self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
-            self.visitChildren(ctx)
-            return ErrorType
+            #make implicit casting of bool to int
+            if left == BoolType and right == IntType:
+                return BoolType
+            elif left == IntType and right == BoolType:
+                return BoolType
+            else:
+                typeErrorMsg ="Comparison between " + left + " and " + right
+                self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
+                self.visitChildren(ctx)
+                return ErrorType
         else:
-            return BoolType
+            if left == IntType:
+                return BoolType
+            elif left == BoolType:
+                return BoolType
+            elif left == StringType:
+                self.errors_list.append(MyErrorVisitor(ctx, "Comparison on String String instead of Ints"))
+                self.visitChildren(ctx)
+                return ErrorType
+            else:
+                self.errors_list.append(MyErrorVisitor(ctx, "Compare type mismatch"))
+                self.visitChildren(ctx)
+                return ErrorType
+           
 
 
     # Visit a parse tree produced by YAPLParser#not.
