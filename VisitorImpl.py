@@ -98,6 +98,21 @@ class YAPL(ParseTreeVisitor):
                         self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
                         return ErrorType
 
+        # Check return type matches
+        exprType = self.visit(ctx.children[-2])
+        originalExprType = exprType
+        hasMatch = False
+        if exprType != functionType:
+            while exprType != None:
+                exprType = self.symbol_table.getClassParent(exprType)
+                if exprType == functionType:
+                    hasMatch = True
+            if not hasMatch:
+                # Return type of function body nor its parents match expected type
+                errorMsg = 'Type-Check: ' + originalExprType + ' does not conform to ' + functionType + ' in method ' + functionName
+                self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                return ErrorType
+
         self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
         self.visitChildren(ctx)
         self.current_function = None
