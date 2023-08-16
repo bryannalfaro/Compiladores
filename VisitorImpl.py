@@ -133,6 +133,15 @@ class YAPL(ParseTreeVisitor):
             self.visitChildren(ctx)
             return ErrorType
 
+        # Check if formals of function are repeated
+        for i in range(0, len(attributes)):
+            for j in range(i+1, len(attributes)):
+                if attributes[i][0]["name"] == attributes[j][0]["name"]:
+                    errorMsg = 'Type-Check: class ' + self.current_class + ' has method ' + functionName + ' with duplicate formal parameter named ' + attributes[i][0]["name"]
+                    self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                    self.visitChildren(ctx)
+                    return ErrorType
+
         self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
         self.current_function = None
         return
