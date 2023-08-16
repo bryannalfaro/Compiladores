@@ -126,6 +126,13 @@ class YAPL(ParseTreeVisitor):
                 self.visitChildren(ctx)
                 return ErrorType
 
+        # Check in symbol table if function exists in scope
+        if self.symbol_table.getFunctionByScope(functionName, 'global.' + self.current_class) != None:
+            errorMsg = 'Type-Check: class ' + self.current_class + ' redefines method ' + functionName
+            self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+            self.visitChildren(ctx)
+            return ErrorType
+
         self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
         self.current_function = None
         return
@@ -149,6 +156,14 @@ class YAPL(ParseTreeVisitor):
             variableValue = self.defaultValues[variableType]
         else:
             variableValue = None
+
+        # Check in symbol table if variable exists in scope
+        if self.symbol_table.getIdByScope(variableName, 'global.' + self.current_class) != None:
+            errorMsg = 'Type-Check: class ' + self.current_class + ' redefines attribute ' + variableName
+            self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+            self.visitChildren(ctx)
+            return ErrorType
+            
         
         self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
         return self.visitChildren(ctx)
@@ -351,9 +366,7 @@ class YAPL(ParseTreeVisitor):
             elif left == BoolType:
                 return BoolType
             elif left == StringType:
-                self.errors_list.append(MyErrorVisitor(ctx, "Comparison on String String instead of Ints"))
-                self.visitChildren(ctx)
-                return ErrorType
+                return BoolType
             else:
                 self.errors_list.append(MyErrorVisitor(ctx, "Compare type mismatch"))
                 self.visitChildren(ctx)
