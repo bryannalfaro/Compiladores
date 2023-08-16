@@ -110,6 +110,7 @@ class YAPL(ParseTreeVisitor):
                         self.visitChildren(ctx)
                         return ErrorType
 
+        self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
         # Check return type matches
         exprType = self.visit(ctx.children[-2])
         originalExprType = exprType
@@ -142,7 +143,6 @@ class YAPL(ParseTreeVisitor):
                     self.visitChildren(ctx)
                     return ErrorType
 
-        self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
         self.current_function = None
         return
 
