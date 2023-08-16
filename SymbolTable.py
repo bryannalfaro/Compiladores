@@ -114,6 +114,8 @@ class SymbolTable():
 
                 if entry.data["name"] == name and entry.data["scope"] == scope:
                     return entry.category
+                else:
+                    return None
 
     def getFunctionByScope(self, name, scope):
         for entry in self.table:

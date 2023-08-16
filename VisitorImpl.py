@@ -462,12 +462,12 @@ class YAPL(ParseTreeVisitor):
         functionScope = 'global.' + self.current_class + '.' + self.current_function
         letScope = 'global.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)
 
-        idType = self.symbol_table.getVariableCategory(idValue, classScope)
+        idType = self.symbol_table.getVariableCategory(idValue, letScope)
         cprint("ID TYPE: "+idType,"red")
         if idType == None:
             idType = self.symbol_table.getVariableCategory(idValue, functionScope)
             if idType == None:
-                idType = self.symbol_table.getVariableCategory(idValue, letScope)
+                idType = self.symbol_table.getVariableCategory(idValue, classScope)
                 if idType == None:
                     self.errors_list.append(MyErrorVisitor(ctx, "Variable " + idValue + " not declared"))
                     self.visitChildren(ctx)
