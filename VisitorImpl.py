@@ -35,6 +35,7 @@ class YAPL(ParseTreeVisitor):
             cprint("Main class must have a main method","red")
 
         #Validate no params on main method
+        print("Symbol",self.symbol_table.printTable())
         paramsMainMethod = self.symbol_table.getMethodParams("main","global.Main")
         if len(paramsMainMethod) != 0:
             self.errors_list.append(MyErrorVisitor(ctx, "Main method must have no params"))

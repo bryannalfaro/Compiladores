@@ -89,6 +89,7 @@ class SymbolTable():
             if entry.type == "function":
                 if entry.data["name"]==name and entry.data["scope"] == scope:
                     return entry.data["attributes"]
+        return []
 
     def getClassParent(self, name):
         for entry in self.table:
