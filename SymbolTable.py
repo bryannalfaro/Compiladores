@@ -75,6 +75,14 @@ class SymbolTable():
             if entry.category == name:
                 count += 1
         return count
+    
+    def getMethodExistence(self,name,scope):
+        count = 0
+        for entry in self.table:
+            if entry.type == "function":
+                if entry.data["name"]==name and entry.data["scope"] == scope:
+                    return True
+        return False
 
     def getClassParent(self, name):
         for entry in self.table:

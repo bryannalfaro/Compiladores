@@ -25,10 +25,15 @@ class YAPL(ParseTreeVisitor):
         self.visitChildren(ctx)
         #search for the main class and it has to be just one
         counterMain = self.symbol_table.getNumberOfEntries("Main")
+        existenceMainMethod = self.symbol_table.getMethodExistence("main","global.Main")
         if counterMain != 1:
             self.errors_list.append(MyErrorVisitor(ctx, "There must be one Main class"))
             
             cprint("Number of Main classes: " + str(counterMain),"red")
+        #validate existence of main method in scope global.Main
+        if existenceMainMethod == False:
+            self.errors_list.append(MyErrorVisitor(ctx, "Main class must have a main method"))
+            cprint("Main class must have a main method","red")
         
 
 
@@ -39,11 +44,7 @@ class YAPL(ParseTreeVisitor):
         self.current_class = classType
 
         classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else None
-        #Main class can not inherit from another class
-        if classType == "Main" and classParent != None:
-            self.errors_list.append(MyErrorVisitor(ctx, "Main class can not inherit from another class"))
-            self.visitChildren(ctx)
-            return ErrorType
+        
         self.symbol_table.add(classType, 'class', 0, 0, {'parent': classParent})
         if self.symbol_table.getClassParent(classParent) == classType and classParent != None:
             # If the parent of the parent is the same as the classType, Inheritance
