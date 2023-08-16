@@ -84,6 +84,12 @@ class SymbolTable():
                     return True
         return False
 
+    def getMethodParams(self,name,scope):
+        for entry in self.table:
+            if entry.type == "function":
+                if entry.data["name"]==name and entry.data["scope"] == scope:
+                    return entry.data["attributes"]
+
     def getClassParent(self, name):
         for entry in self.table:
             if entry.category == name and entry.type == 'class':
