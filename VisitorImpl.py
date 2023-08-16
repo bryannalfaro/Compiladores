@@ -281,15 +281,21 @@ class YAPL(ParseTreeVisitor):
 
 
     # Visit a parse tree produced by YAPLParser#while.
+    #@TODO check only type or change the value of 0 to false
     def visitWhile(self, ctx:YAPLParser.WhileContext):
         compareExpression = self.visit(ctx.children[1])
         if compareExpression == BoolType:
             self.visit(ctx.children[3])
             return ObjectType
+        elif compareExpression == IntType:
+            #make casting int to bool
+            
+                self.visit(ctx.children[3])
+                return ObjectType
         else:
-            self.errors_list.append(MyErrorVisitor(ctx, "Predicate has type " + compareExpression + " instead of BOOL"))
-            self.visitChildren(ctx)
-            return ErrorType
+                self.errors_list.append(MyErrorVisitor(ctx, "Predicate has type " + compareExpression + " instead of BOOL"))
+                self.visitChildren(ctx)
+                return ErrorType
 
 
     # Visit a parse tree produced by YAPLParser#int.
@@ -451,8 +457,9 @@ class YAPL(ParseTreeVisitor):
         else:
             return variable.getCategory()
 
-
+    
     # Visit a parse tree produced by YAPLParser#if.
+    #@TODO check and return the if type or not, for casting.
     def visitIf(self, ctx:YAPLParser.IfContext):
         compareExpression = self.visit(ctx.children[1])
         thenType = self.visit(ctx.children[3])
@@ -476,6 +483,8 @@ class YAPL(ParseTreeVisitor):
                 thenTempType = self.symbol_table.getClassParent(thenTempType)
 
         if compareExpression == BoolType:
+            return ifType
+        elif compareExpression == IntType:
             return ifType
         else:
             self.errors_list.append(MyErrorVisitor(ctx, "Conditional has type " + compareExpression + " instead of BOOL"))
