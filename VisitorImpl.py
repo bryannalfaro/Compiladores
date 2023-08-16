@@ -48,11 +48,11 @@ class YAPL(ParseTreeVisitor):
         classType = ctx.children[1].getText()
         self.current_class = classType
 
-        classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else None
+        classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else ObjectType
         
         self.symbol_table.add(classType, 'class', 0, 0, {'parent': classParent})
         if self.symbol_table.getClassParent(classParent) == classType and classParent != None:
-            # If the parent of the parent is the same as the classType, Inheritance
+            # If the parent of the parent is the same as the classType, Inheritance cycle
             typeErrorMsg = "Inheritance cycle: " + classType + " " + classParent
             self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
             self.visitChildren(ctx)
@@ -208,7 +208,8 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#negation.
     def visitNegation(self, ctx:YAPLParser.NegationContext):
-        result = self.visit(ctx.expr())
+        self.visit(ctx.children[0])
+        result = self.visit(ctx.children[1])
         #check if the type is an integer
         if result == IntType:
             return IntType
@@ -226,9 +227,14 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#curly.
     def visitCurly(self, ctx:YAPLParser.CurlyContext):
-        #self.visitChildren(ctx)
-        # Return last expr type
-        return self.visit(ctx.children[-3])
+        # Visit all children, but return type of last <expr>
+        for index, child in enumerate(ctx.children):
+            if index != len(ctx.children) - 3:
+                self.visit(child)
+            else:
+                self.visit(ctx.children[-2])
+                self.visit(ctx.children[-1])
+                return self.visit(child)
 
 
     # Visit a parse tree produced by YAPLParser#string.
@@ -253,6 +259,7 @@ class YAPL(ParseTreeVisitor):
     def visitWhile(self, ctx:YAPLParser.WhileContext):
         compareExpression = self.visit(ctx.children[1])
         if compareExpression == BoolType:
+            self.visit(ctx.children[3])
             return ObjectType
         else:
             self.errors_list.append(MyErrorVisitor(ctx, "Predicate has type " + compareExpression + " instead of BOOL"))
@@ -275,7 +282,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#newtype.
     def visitNewtype(self, ctx:YAPLParser.NewtypeContext):
-        self.visitChildren(ctx)
+        self.visit(ctx.children[0])
         # Return Type
         return self.visit(ctx.children[1])
 
@@ -372,7 +379,8 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#paren.
     def visitParen(self, ctx:YAPLParser.ParenContext):
-        self.visitChildren(ctx)
+        self.visit(ctx.children[0])
+        self.visit(ctx.children[2])
         # Return expr type
         return self.visit(ctx.children[1])
 
@@ -399,7 +407,12 @@ class YAPL(ParseTreeVisitor):
         self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
         self.visitChildren(ctx)
         self.current_let += 1
-        return self.visit(ctx.children[-1])
+        # Visit all children, and return last visit
+        for index, child in enumerate(ctx.children):
+            if index != len(ctx.children) - 1:
+                self.visit(child)
+            else:
+                return self.visit(child)
 
 
     # Visit a parse tree produced by YAPLParser#id.
