@@ -111,11 +111,9 @@ class SymbolTable():
     def getVariableCategory(self, name, scope=None):
         for entry in self.table:
             if entry.type == "variable":
-
                 if entry.data["name"] == name and entry.data["scope"] == scope:
                     return entry.category
-                else:
-                    return None
+        return None
 
     def getFunctionByScope(self, name, scope):
         for entry in self.table:

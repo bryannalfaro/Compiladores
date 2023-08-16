@@ -463,7 +463,6 @@ class YAPL(ParseTreeVisitor):
         letScope = 'global.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)
 
         idType = self.symbol_table.getVariableCategory(idValue, letScope)
-        cprint("ID TYPE: "+idType,"red")
         if idType == None:
             idType = self.symbol_table.getVariableCategory(idValue, functionScope)
             if idType == None:
