@@ -21,7 +21,6 @@ class YAPL(ParseTreeVisitor):
         self.current_let = 0
      # Visit a parse tree produced by YAPLParser#program.
     def visitProgram(self, ctx:YAPLParser.ProgramContext):
-        
         self.visitChildren(ctx)
         #search for the main class and it has to be just one
         counterMain = self.symbol_table.getNumberOfEntries("Main")
@@ -227,7 +226,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#curly.
     def visitCurly(self, ctx:YAPLParser.CurlyContext):
-        self.visitChildren(ctx)
+        #self.visitChildren(ctx)
         # Return last expr type
         return self.visit(ctx.children[-3])
 
@@ -405,7 +404,6 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#id.
     def visitId(self, ctx:YAPLParser.IdContext):
-
         #search for the variable in the symbol table 
         #@TODO verificar scope al tenerlo 
         variable = self.symbol_table.getVariable(ctx.getText())
@@ -455,12 +453,51 @@ class YAPL(ParseTreeVisitor):
         idValue = ctx.children[0].getText()
         #get the expression of the assignment
         exprValue = ctx.children[2].getText()
+        
+        #get type of the expression
+        exprType = self.visit(ctx.children[2])
+
+        #search ID in symbol table with scopes to find the type
+        classScope = 'global.' + self.current_class
+        functionScope = 'global.' + self.current_class + '.' + self.current_function
+        letScope = 'global.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)
+
+        idType = self.symbol_table.getVariableCategory(idValue, classScope)
+        cprint("ID TYPE: "+idType,"red")
+        if idType == None:
+            idType = self.symbol_table.getVariableCategory(idValue, functionScope)
+            if idType == None:
+                idType = self.symbol_table.getVariableCategory(idValue, letScope)
+                if idType == None:
+                    self.errors_list.append(MyErrorVisitor(ctx, "Variable " + idValue + " not declared"))
+                    self.visitChildren(ctx)
+                    return ErrorType
+            
+            cprint("ID TYPE: "+idType,"red")
+
+        #search type of expr if type it is not primitive or function call
+        hasMatch = False
+        if exprType != idType:
+            while exprType != None:
+                cprint("EXPR TYPE busqueda: "+exprType,"yellow")
+                exprType = self.symbol_table.getClassParent(exprType)
+                if exprType == idType:
+                    hasMatch = True
+                    break
+            if not hasMatch:
+                # Return type of function body nor its parents match expected type
+                errorMsg = 'Type-Check: ' + str(exprType) + ' does not conform to ' + idType + ' in variable ' + idValue
+                self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                self.visitChildren(ctx)
+                return ErrorType
+            
+        cprint("TYPES MATCH "+idType+exprType,"blue")
+
 
         #assing in symbol table value
         self.symbol_table.setVariableValue(idValue, exprValue)
-        cprint("ASSIGN: "+"ID:"+idValue+" EXPR>"+exprValue,"green")
-        self.visitChildren(ctx)
-        return self.visit(ctx.children[2])
+        cprint("ASSIGN: "+"ID:"+idValue+" EXPR> "+exprValue,"green")
+        return exprType
 
 
     # Visit a parse tree produced by YAPLParser#bigexpr.

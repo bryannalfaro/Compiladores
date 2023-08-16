@@ -107,6 +107,13 @@ class SymbolTable():
             if entry.type == 'function':
                 if entry.data["name"] == name:
                     return entry.category
+    
+    def getVariableCategory(self, name, scope=None):
+        for entry in self.table:
+            if entry.type == "variable":
+
+                if entry.data["name"] == name and entry.data["scope"] == scope:
+                    return entry.category
 
     def getFunctionByScope(self, name, scope):
         for entry in self.table:
