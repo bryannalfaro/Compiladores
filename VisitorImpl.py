@@ -35,7 +35,6 @@ class YAPL(ParseTreeVisitor):
             cprint("Main class must have a main method","red")
 
         #Validate no params on main method
-        print("Symbol",self.symbol_table.printTable())
         paramsMainMethod = self.symbol_table.getMethodParams("main","global.Main")
         if len(paramsMainMethod) != 0:
             self.errors_list.append(MyErrorVisitor(ctx, "Main method must have no params"))
@@ -74,6 +73,11 @@ class YAPL(ParseTreeVisitor):
         # Attribute count takes 8 (no attributes) from the children length, and then it ignores commas
         attributeCount = 0 if len(ctx.children) == 8 else int(((len(ctx.children) - 8) / 2) + 0.5)
         functionType = ctx.children[-4].getText()
+        
+        #Evaluation of SELF_TYPE
+        if functionType == SELF_TYPE:
+            functionType = self.current_class
+
         attributes = []
         for i in range(2, 2 * attributeCount + 1, 2):
             # Visiting all attributes (Formal)
@@ -87,8 +91,10 @@ class YAPL(ParseTreeVisitor):
             # Changing formal id
 
         parentClass = self.symbol_table.getClassParent(self.current_class)
+        cprint("PARENT CLASS: "+str(parentClass),"red")
         if parentClass != None:
             parentFunction = self.symbol_table.getFunctionByScope(functionName, 'global.' + parentClass)
+            cprint("PARENT FUNCTION: "+str(parentFunction),"red")
             if parentFunction != None:
                 # Check number of formals
                 if attributeCount != parentFunction.data["attributeCount"]:
@@ -110,9 +116,14 @@ class YAPL(ParseTreeVisitor):
                         self.visitChildren(ctx)
                         return ErrorType
 
-        self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
         # Check return type matches
         exprType = self.visit(ctx.children[-2])
+        cprint(str(exprType)+str(functionType),"green")
+        
+        #Evaluation of SELF_TYPE
+        if exprType == SELF_TYPE:
+            exprType = self.current_class
+
         originalExprType = exprType
         hasMatch = False
         if exprType != functionType:
@@ -128,7 +139,7 @@ class YAPL(ParseTreeVisitor):
                 return ErrorType
 
         # Check in symbol table if function exists in scope
-        if self.symbol_table.getFunctionByScope(functionName, 'global.' + self.current_class) != None:
+        if self.symbol_table.getFunctionByScope(functionName, 'global.' + self.current_class) != None or self.symbol_table.getFunctionByScope(functionName, 'global.' + "IO") != None:
             errorMsg = 'Type-Check: class ' + self.current_class + ' redefines method ' + functionName
             self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
             self.visitChildren(ctx)
@@ -144,6 +155,10 @@ class YAPL(ParseTreeVisitor):
                     return ErrorType
 
         self.current_function = None
+        print("Saliendo de function")
+        #@TODO validate position of this
+        self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
+
         return
 
 
@@ -154,6 +169,7 @@ class YAPL(ParseTreeVisitor):
         #evaluate the value to assign default values
         if len(ctx.children) > 3:
             variableValue = ctx.children[4].getText()
+            print('VARIABLE VALUE', variableValue)
             valueType  = self.visit(ctx.children[4]) #Type of value to assign
             
             #check if the types are the same
@@ -197,6 +213,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#plusminus.
     def visitPlusminus(self, ctx:YAPLParser.PlusminusContext):
+        print("PLUSMINUS")
         #get the type of the left and right side
         results = []
         for plus_node in ctx.expr():
@@ -257,9 +274,15 @@ class YAPL(ParseTreeVisitor):
             if index != len(ctx.children) - 3:
                 self.visit(child)
             else:
+                print(ctx.children[-2].getText())
+
                 self.visit(ctx.children[-2])
+                print(ctx.children[-1].getText())
                 self.visit(ctx.children[-1])
-                return self.visit(child)
+                last = self.visit(child)
+                print(child.getText())
+                cprint("LAST: "+str(last),"blue")
+                return last
 
 
     # Visit a parse tree produced by YAPLParser#string.
@@ -304,10 +327,14 @@ class YAPL(ParseTreeVisitor):
 
 
     # Visit a parse tree produced by YAPLParser#call.
+    #@TODO how to validate SELF_TYPE
     def visitCall(self, ctx:YAPLParser.CallContext):
+        print("CALL")
         self.visitChildren(ctx)
         # Return ID type
+        print(ctx.children[0].getText())
         callType = self.symbol_table.getCategory(ctx.children[0].getText())
+        print(callType)
         return callType
 
 
@@ -447,15 +474,19 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#id.
     def visitId(self, ctx:YAPLParser.IdContext):
         #search for the variable in the symbol table 
+        
+        if ctx.getText() == 'self': #si es self
+            return SELF_TYPE
         #@TODO verificar scope al tenerlo 
-        variable = self.symbol_table.getVariable(ctx.getText())
-
-        if variable == None:
-            self.errors_list.append(MyErrorVisitor(ctx, "Variable " + ctx.getText() + " not declared"))
-            self.visitChildren(ctx)
-            return ErrorType
         else:
-            return variable.getCategory()
+            variable = self.symbol_table.getVariable(ctx.getText())
+
+            if variable == None:
+                self.errors_list.append(MyErrorVisitor(ctx, "Variable " + ctx.getText() + " not declared"))
+                self.visitChildren(ctx)
+                return ErrorType
+            else:
+                return variable.getCategory()
 
     
     # Visit a parse tree produced by YAPLParser#if.
@@ -491,13 +522,19 @@ class YAPL(ParseTreeVisitor):
             self.visitChildren(ctx)
             return ErrorType
 
-
+    #@TODO error expr not complete
     # Visit a parse tree produced by YAPLParser#assign.
     def visitAssign(self, ctx:YAPLParser.AssignContext):
+        #print the text of all children
+        for child in ctx.children:
+            print("CHILD TEXT",child.getText())
         #get id of the assignment
         idValue = ctx.children[0].getText()
         #get the expression of the assignment
         exprValue = ctx.children[2].getText()
+        print("HAHA",ctx.expr())
+
+        print("ASSIGN: "+idValue+" EXPR> "+exprValue)
         
         #get type of the expression
         exprType = self.visit(ctx.children[2])

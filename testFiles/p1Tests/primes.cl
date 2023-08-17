@@ -1,5 +1,4 @@
 class Main inherits IO {
-
   out : Int <-		-- out is our 'output'.  It's values are the primes.
     {
       out_string("2 is trivially prime.\n");
@@ -50,3 +49,4 @@ class Main inherits IO {
     pool;
     }
   };
+};

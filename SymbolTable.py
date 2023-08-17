@@ -27,13 +27,14 @@ class SymbolTable():
 
     def initialize(self):
         # Initialize the symbol table with the predefined functions
-        self.table.append(TableEntry("out_string",SELF_TYPE, 0,0, {"parent": IOType, "params": [StringType], "return_type": SELF_TYPE, "scope": "global.IO"}))
-        self.table.append(TableEntry("out_int",SELF_TYPE, 0,0, {"parent": IOType, "params": ["Int"], "return_type": SELF_TYPE, "scope": "global.IO"}))
-        self.table.append(TableEntry("in_string",StringType, 0,0, {"parent": IOType, "params": [], "return_type": StringType, "scope": "global.IO"}))
-        self.table.append(TableEntry("in_int",IntType, 0,0, {"parent": IOType, "params": [], "return_type": IntType, "scope": "global.IO"}))
-        self.table.append(TableEntry("length",IntType, 0,0, {"parent": StringType, "params": [], "return_type": IntType, "scope": "globalString"}))
-        self.table.append(TableEntry("concat",StringType, 0,0, {"parent": StringType, "params": [StringType], "return_type": StringType, "scope": "global.String"}))
-        self.table.append(TableEntry("substr",StringType, 0,0, {"parent": StringType, "params": [IntType, IntType], "return_type": StringType, "scope": "global.String"}))
+        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"out_string","parent": IOType, "params": [StringType], "return_type": SELF_TYPE, "scope": "global.IO"}))
+        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"out_int","parent": IOType, "params": [IntType], "return_type": SELF_TYPE, "scope": "global.IO"}))
+        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"in_string","parent": IOType, "params": [], "return_type": StringType, "scope": "global.IO"}))
+        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"in_int","parent": IOType, "params": [], "return_type": IntType, "scope": "global.IO"}))
+        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"length","parent": StringType, "params": [], "return_type": IntType, "scope": "global.String"}))
+        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"concat","parent": StringType, "params": [StringType], "return_type": StringType, "scope": "global.String"}))
+        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"substr","parent": StringType, "params": [IntType, IntType], "return_type": StringType, "scope": "global.String"}))
+        
 
         #Add Object class
         self.table.append(TableEntry(ObjectType,"class", 0,0, {"parent": None}))
@@ -72,7 +73,7 @@ class SymbolTable():
     def getNumberOfEntries(self,name):
         count = 0
         for entry in self.table:
-            if entry.category == name:
+            if entry.category == name and entry.type == "class":
                 count += 1
         return count
     

@@ -8,7 +8,7 @@ class CustomLexer(YAPLLexer):
 
         if token.type == YAPLLexer.STRING:
             # Modify the token type if the string length exceeds the limit
-            if len(token.text) - 2 > 10:  # Excluding the surrounding double quotes
+            if len(token.text) - 2 > 30:  # Excluding the surrounding double quotes
                 token.type = YAPLLexer.ERROR
             string_text = token.text[1:-1]
             if ('\n' in string_text and string_text[-1] != '\\n') or (string_text[-1] == '\\n'):
