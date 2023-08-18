@@ -20,10 +20,10 @@ def evaluate_expression(input_str):
     #errors
     lexer.removeErrorListeners()
     lexer.addErrorListener(listener)
-    
 
 
-    
+
+
     for token in token_stream.getTokens(0, len(token_stream.tokens) - 1):
         if token.type == YAPLLexer.ERROR:
             cprint(f"Error token: {token.text} at line {token.line}, column {token.column}","red")
@@ -33,23 +33,23 @@ def evaluate_expression(input_str):
     parser = YAPLParser(token_stream)
     parser.removeErrorListeners()
     parser.addErrorListener(listener)
-    
+
     tree = parser.program()
 
     #print(Trees.toStringTree(tree, None, parser))
 
     visitor = YAPL()
-    
+
 
     if len(listener.get_errors()) > 0:
         print('errors found')
         return None
     else:
       #command to show tree
-      command = f"antlr4-parse YAPL.g4 program -gui"
-      process = os.popen(command, 'w')
-      process.write(input_string)
-      process.close()
+    #   command = f"antlr4-parse YAPL.g4 program -gui"
+    #   process = os.popen(command, 'w')
+    #   process.write(input_string)
+    #   process.close()
       visitor.visit(tree)
       #see errors
       if len(visitor.errors_list) > 0:
@@ -63,8 +63,8 @@ def evaluate_expression(input_str):
           visitor.symbol_table.printTable()
       return None
 
-    
-    
+
+
 
 # Example usage
 input_string = FileStream(input('name file : ')).strdata
