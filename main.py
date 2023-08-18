@@ -46,17 +46,17 @@ def evaluate_expression(input_str):
         return None
     else:
       #command to show tree
-    #   command = f"antlr4-parse YAPL.g4 program -gui"
-    #   process = os.popen(command, 'w')
-    #   process.write(input_string)
-    #   process.close()
+      command = f"antlr4-parse YAPL.g4 program -gui"
+      process = os.popen(command, 'w')
+      process.write(input_string)
+      process.close()
       visitor.visit(tree)
       #see errors
       if len(visitor.errors_list) > 0:
         cprint("Type errors found","red")
         for error in visitor.errors_list:
             print(error)
-        #visitor.symbol_table.printTable()
+        visitor.symbol_table.printTable()
       else:
           cprint("No type errors found","green")
           #print the symbol table

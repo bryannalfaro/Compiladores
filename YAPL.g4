@@ -5,8 +5,7 @@ class_grammar: CLASS TYPE (INHERITS TYPE)? '{' (feature ';')* '}';
 feature: ID '(' (formal (',' formal)*)?')' ':' TYPE '{' expr '}' # function
 | ID ':' TYPE (ASSIGN_OP expr)? # variable;
 formal: ID ':' TYPE;
-expr: ID ASSIGN_OP expr # assign
-| expr('@'TYPE)?'.'ID '(' (expr (',' expr)*)? ')' # bigexpr
+expr: expr('@'TYPE)?'.'ID '(' (expr (',' expr)*)? ')' # bigexpr
 | ID '(' (expr (',' expr)*)? ')' # call
 | IF expr THEN expr ELSE expr FI # if
 | WHILE expr LOOP expr POOL # while
@@ -24,7 +23,8 @@ expr: ID ASSIGN_OP expr # assign
 | INT # int
 | STRING # string
 | TRUE # true
-| FALSE # false; 
+| FALSE # false
+| ID ASSIGN_OP expr # assign; 
 
 
 

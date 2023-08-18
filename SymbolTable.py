@@ -110,6 +110,13 @@ class SymbolTable():
                 if entry.data["name"] == name:
                     return entry.category
     
+    def getCallMethodExistence(self,name,  scope,current=None):
+        for entry in self.table:
+            if entry.type == "function":
+                if entry.data["name"]==name and (entry.data["scope"] == scope or entry.data["scope"] == "global.IO") or name == current: 
+                    return True
+        return False
+    
     def getVariableCategory(self, name, scope=None):
         for entry in self.table:
             if entry.type == "variable":

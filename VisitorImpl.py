@@ -213,10 +213,11 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#plusminus.
     def visitPlusminus(self, ctx:YAPLParser.PlusminusContext):
-        print("PLUSMINUS")
+        cprint("PLUSMINUS"+ctx.children[0].getText(), "blue")
         #get the type of the left and right side
         results = []
         for plus_node in ctx.expr():
+            print("plus node",plus_node.getText())
             results.append(self.visit(plus_node))
         left = results[0]
         right = results[-1]
@@ -333,9 +334,17 @@ class YAPL(ParseTreeVisitor):
         self.visitChildren(ctx)
         # Return ID type
         print(ctx.children[0].getText())
-        callType = self.symbol_table.getCategory(ctx.children[0].getText())
-        print(callType)
-        return callType
+        existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[0].getText(), 'global.' + self.current_class, self.current_function)
+        
+        if existenceMethod == False:
+            self.errors_list.append(MyErrorVisitor(ctx, "Method " + ctx.children[0].getText() + " not declared"))
+            self.visitChildren(ctx)
+            return ErrorType
+        else:
+        
+            callType = self.symbol_table.getCategory(ctx.children[0].getText())
+            print(callType)
+            return callType
 
 
     # Visit a parse tree produced by YAPLParser#newtype.
@@ -526,6 +535,10 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#assign.
     def visitAssign(self, ctx:YAPLParser.AssignContext):
         #print the text of all children
+        print("FULL TEXT",ctx.getText(),ctx.children[2])
+        #for to iterate children 2
+        for child in ctx.children[2].children:
+            print("GRAND CHILD TEXT",child.getText())
         for child in ctx.children:
             print("CHILD TEXT",child.getText())
         #get id of the assignment
@@ -569,7 +582,8 @@ class YAPL(ParseTreeVisitor):
                 # Return type of function body nor its parents match expected type
                 errorMsg = 'Type-Check: ' + str(exprType) + ' does not conform to ' + idType + ' in variable ' + idValue
                 self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
-                self.visitChildren(ctx)
+                #@TODO este se vuelve a visitar
+                #self.visitChildren(ctx)
                 return ErrorType
             
         cprint("TYPES MATCH "+idType+exprType,"blue")
