@@ -29,12 +29,14 @@ class SymbolTable():
         # Initialize the symbol table with the predefined functions
         self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"out_string","parent": IOType, "params": [StringType], "return_type": SELF_TYPE, "scope": "global.IO"}))
         self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"out_int","parent": IOType, "params": [IntType], "return_type": SELF_TYPE, "scope": "global.IO"}))
-        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"in_string","parent": IOType, "params": [], "return_type": StringType, "scope": "global.IO"}))
-        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"in_int","parent": IOType, "params": [], "return_type": IntType, "scope": "global.IO"}))
-        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"length","parent": StringType, "params": [], "return_type": IntType, "scope": "global.String"}))
-        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"concat","parent": StringType, "params": [StringType], "return_type": StringType, "scope": "global.String"}))
-        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"substr","parent": StringType, "params": [IntType, IntType], "return_type": StringType, "scope": "global.String"}))
-        
+        self.table.append(TableEntry(StringType,"function", 0,0, {"name":"in_string","parent": IOType, "params": [], "return_type": StringType, "scope": "global.IO"}))
+        self.table.append(TableEntry(IntType,"function", 0,0, {"name":"in_int","parent": IOType, "params": [], "return_type": IntType, "scope": "global.IO"}))
+        self.table.append(TableEntry(IntType,"function", 0,0, {"name":"length","parent": StringType, "params": [], "return_type": IntType, "scope": "global.String"}))
+        self.table.append(TableEntry(StringType,"function", 0,0, {"name":"concat","parent": StringType, "params": [StringType], "return_type": StringType, "scope": "global.String"}))
+        self.table.append(TableEntry(StringType,"function", 0,0, {"name":"substr","parent": StringType, "params": [IntType, IntType], "return_type": StringType, "scope": "global.String"}))
+        self.table.append(TableEntry(StringType,"function", 0,0, {"name":"type_name","parent": ObjectType, "params": [], "return_type": StringType, "scope": "global.Object"}))
+        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"copy","parent": ObjectType, "params": [], "return_type": SELF_TYPE, "scope": "global.Object"}))
+        self.table.append(TableEntry(SELF_TYPE,"function", 0,0, {"name":"abort","parent": ObjectType, "params": [], "return_type": ObjectType, "scope": "global.Object"}))
 
         #Add Object class
         self.table.append(TableEntry(ObjectType,"class", 0,0, {"parent": None}))

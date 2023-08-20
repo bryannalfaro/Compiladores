@@ -682,7 +682,7 @@ class YAPL(ParseTreeVisitor):
             self.visit(ctx.children[i])
         print("BIG EXPR TYPE",callerType)
         idIndex = 4 if ctx.children[1].getText() == '@' else 2
-        
+        print('CHECKING', callerType, ctx.children[idIndex].getText())
         existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
         parentCheck = callerType
 
