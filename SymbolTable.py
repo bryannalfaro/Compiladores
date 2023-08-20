@@ -64,11 +64,13 @@ class SymbolTable():
                 if entry.data["name"] == name:
                     return entry
                 
-    def setVariableValue(self, name, value):
+    def setVariableValue(self, name, value, scope):
         for entry in self.table:
             if entry.type == "variable":
-                if entry.data["name"] == name:
+                if entry.data["name"] == name and entry.data["scope"] == scope:
                     entry.data["value"] = value
+                    return True
+        return False
 
     def getNumberOfEntries(self,name):
         count = 0

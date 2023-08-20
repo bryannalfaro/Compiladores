@@ -643,7 +643,12 @@ class YAPL(ParseTreeVisitor):
 
 
         #assing in symbol table value
-        self.symbol_table.setVariableValue(idValue, exprValue)
+        if self.symbol_table.setVariableValue(idValue, exprValue, letScope ):
+            return exprType
+        if self.symbol_table.setVariableValue(idValue, exprValue, functionScope):
+            return exprType
+        if self.symbol_table.setVariableValue(idValue, exprValue, classScope):
+            return exprType
         cprint("ASSIGN: "+"ID:"+idValue+" EXPR> "+exprValue,"green")
         return exprType
 
