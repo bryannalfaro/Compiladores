@@ -45,6 +45,8 @@ def yapl_compile():
     visitor = YAPL()
     
     if len(listener.get_errors()) > 0:
+        for error in listener.get_errors():
+            results.append(error)
         print('errors found')
     else:
       #command to show tree
@@ -66,7 +68,7 @@ def yapl_compile():
     # Get the errors
     
     for error in visitor.errors_list:
-        results.append(error.args[1])
+        results.append(error.__str__())
     return jsonify({'result': results
                     })
 

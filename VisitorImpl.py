@@ -206,7 +206,7 @@ class YAPL(ParseTreeVisitor):
             #check if the types are the same
             if variableType != valueType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Variable type mismatch"))
-                self.visitChildren(ctx)
+                #self.visitChildren(ctx)
                 return ErrorType
         elif variableType in self.defaultValues:
             variableValue = self.defaultValues[variableType]
@@ -562,7 +562,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#id.
     def visitId(self, ctx:YAPLParser.IdContext):
-        print("FUNCTION TYPE ID",self.current_function_type)
+        print("FUNCTION TYPE ID",self.current_function_type,self.current_function)
         #search for the variable in the symbol table 
         #print(self.symbol_table.printTable())
         if ctx.getText() == 'self': #si es self
@@ -571,7 +571,21 @@ class YAPL(ParseTreeVisitor):
         else:
             print("IM HERE IN ID ELSE AAAAAA")
             print(ctx.getText())
-            variable = self.symbol_table.getVariable(ctx.getText())
+            classScope = 'global.' + str(self.current_class)
+            functionScope = 'global.' + str(self.current_class) + '.' + str(self.current_function)
+            letScope = 'local.' + str(self.current_class) + '.' + str(self.current_function) + '.let' + str(self.current_let-1)
+            paramScope = 'local.' + str(self.current_class) + '.' + str(self.current_function)
+
+            variable = self.symbol_table.getVariableCategory(ctx.getText(), letScope)
+            
+            if variable == None:
+                variable = self.symbol_table.getVariableCategory(ctx.getText(), paramScope)
+
+                if variable == None:
+                    variable = self.symbol_table.getVariableCategory(ctx.getText(), functionScope)
+                    if variable == None:
+                     variable= self.symbol_table.getVariableCategory(ctx.getText(), classScope)
+           
 
             if variable == None:
                 if ctx.getText() == self.current_function:
@@ -582,7 +596,7 @@ class YAPL(ParseTreeVisitor):
                     self.visitChildren(ctx)
                     return ErrorType
             else:
-                return variable.getCategory()
+                return variable
 
     
     # Visit a parse tree produced by YAPLParser#if.
@@ -642,21 +656,23 @@ class YAPL(ParseTreeVisitor):
 
         print("EXPRTYPE",exprType)
         #search ID in symbol table with scopes to find the type
-        classScope = 'global.' + self.current_class
-        functionScope = 'global.' + self.current_class + '.' + self.current_function
-        letScope = 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let-1)
-
+        classScope = 'global.' + str(self.current_class)
+        functionScope = 'global.' + str(self.current_class) + '.' + str(self.current_function)
+        letScope = 'local.' + str(self.current_class) + '.' + str(self.current_function) + '.let' + str(self.current_let-1)
+        paramScope = 'local.' + str(self.current_class) + '.' + str(self.current_function)
         print("ASSIGN SCOPE",letScope,idValue)
         idType = self.symbol_table.getVariableCategory(idValue, letScope)
         
         if idType == None:
-            idType = self.symbol_table.getVariableCategory(idValue, functionScope)
+            idType = self.symbol_table.getVariableCategory(idValue, paramScope)
             if idType == None:
-                idType = self.symbol_table.getVariableCategory(idValue, classScope)
+                idType = self.symbol_table.getVariableCategory(idValue, functionScope)
                 if idType == None:
-                    self.errors_list.append(MyErrorVisitor(ctx, "Variable " + idValue + " not declared"))
-                    self.visitChildren(ctx)
-                    return ErrorType
+                    idType = self.symbol_table.getVariableCategory(idValue, classScope)
+                    if idType == None:
+                        self.errors_list.append(MyErrorVisitor(ctx, "Variable " + idValue + " not declared"))
+                        self.visitChildren(ctx)
+                        return ErrorType
             
             cprint("ID TYPE: "+idType,"red")
 
@@ -682,6 +698,8 @@ class YAPL(ParseTreeVisitor):
 
         #assing in symbol table value
         if self.symbol_table.setVariableValue(idValue, exprValue, letScope ):
+            return exprType
+        if self.symbol_table.setVariableValue(idValue, exprValue, paramScope):
             return exprType
         if self.symbol_table.setVariableValue(idValue, exprValue, functionScope):
             return exprType
