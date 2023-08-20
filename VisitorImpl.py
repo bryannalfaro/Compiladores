@@ -8,6 +8,7 @@ class YAPL(ParseTreeVisitor):
     def __init__(self):
         super().__init__()
         self.symbol_table = SymbolTable()
+        self.function_table = SymbolTable()
         self.symbol_table.initialize()
         self.errors_list = []
         self.defaultValues = {
@@ -49,6 +50,9 @@ class YAPL(ParseTreeVisitor):
     def visitDefineClasses(self, ctx:YAPLParser.Class_grammarContext): 
         cprint("IM HERE DEFINING","red")
         classType = ctx.children[1].getText()
+        for child in ctx.children:
+            if isinstance(child, YAPLParser.FunctionContext):
+                self.visitDefineFunction(child, classType)
 
         classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else ObjectType
         cprint(classType+classParent,"blue")
@@ -78,6 +82,19 @@ class YAPL(ParseTreeVisitor):
             return ErrorType
 
         self.visitChildren(ctx)
+        return
+
+    def visitDefineFunction(self, ctx:YAPLParser.FunctionContext, className):
+        functionName = ctx.children[0].getText()
+        # Attribute count takes 8 (no attributes) from the children length, and then it ignores commas
+        attributeCount = 0 if len(ctx.children) == 8 else int(((len(ctx.children) - 8) / 2) + 0.5)
+        functionType = ctx.children[-4].getText()
+        #Evaluation of SELF_TYPE
+        if functionType == SELF_TYPE:
+            functionType = self.current_class
+
+        self.function_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'scope': 'global.' + className})
+
         return
 
     # Visit a parse tree produced by YAPLParser#function.
@@ -684,21 +701,31 @@ class YAPL(ParseTreeVisitor):
         idIndex = 4 if ctx.children[1].getText() == '@' else 2
         print('CHECKING', callerType, ctx.children[idIndex].getText())
         existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
+        inFunctionTableExistence = self.function_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
         parentCheck = callerType
+        funcParentCheck = callerType
 
         while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
             parentCheck = self.symbol_table.getClassParent(parentCheck)
             if parentCheck != None:
                 existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + parentCheck, self.current_function)
+                if not inFunctionTableExistence:
+                    funcParentCheck = parentCheck
+                    inFunctionTableExistence = self.function_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + parentCheck, self.current_function)
 
         if existenceMethod == False:
             print("IM HERE CALL BIG EXPR METHOD")
             if ctx.children[idIndex].getText() == self.current_function:
                 return self.current_function_type
+            if inFunctionTableExistence:
+                # Function defined in non visited class
+                bigExprType = self.function_table.getCategoryScope(ctx.children[idIndex].getText(), 'global.' + funcParentCheck)
+                if bigExprType == None:
+                    return self.current_function_type
+                return bigExprType
             #TODO change this when class definition error is fixed
             #self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[idIndex].getText()+" in dispatch on " + self.visit(ctx.children[idIndex])))
             self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[idIndex].getText()+" in dispatch on " +self.current_class))
-            
             #self.visitChildren(ctx)
             return ErrorType
         else:
