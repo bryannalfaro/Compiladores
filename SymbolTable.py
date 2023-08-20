@@ -134,6 +134,11 @@ class SymbolTable():
             if entry.type == "variable":
                 if entry.data["name"] == name and entry.data["scope"] == scope:
                     return entry.category
+                if entry.data["name"] == name and "let" in scope:
+                    letIndex = scope.index("let") + 3
+                    newScope = scope[0:letIndex]
+                    if entry.data["scope"].startswith(newScope):
+                        return entry.category
         return None
 
     def getFunctionByScope(self, name, scope):
