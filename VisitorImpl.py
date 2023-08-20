@@ -571,6 +571,7 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#if.
     #@TODO check and return the if type or not, for casting.
     def visitIf(self, ctx:YAPLParser.IfContext):
+        print("COMPARE TYPE",type(ctx.children[1]))
         compareExpression = self.visit(ctx.children[1])
         thenType = self.visit(ctx.children[3])
         elseType = self.visit(ctx.children[5])
@@ -676,14 +677,14 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#bigexpr.
     def visitBigexpr(self, ctx:YAPLParser.BigexprContext):
         # Return ID type
-        bigExprType = self.visit(ctx.children[0])
+        callerType = self.visit(ctx.children[0])
         for i in range(1, len(ctx.children)):
             self.visit(ctx.children[i])
-        print("BIG EXPR TYPE",bigExprType)
+        print("BIG EXPR TYPE",callerType)
         idIndex = 4 if ctx.children[1].getText() == '@' else 2
         
-        existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + bigExprType, self.current_function)
-        parentCheck = bigExprType
+        existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
+        parentCheck = callerType
 
         while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
             parentCheck = self.symbol_table.getClassParent(parentCheck)
@@ -700,4 +701,8 @@ class YAPL(ParseTreeVisitor):
             
             #self.visitChildren(ctx)
             return ErrorType
-        return bigExprType
+        else:
+            bigExprType = self.symbol_table.getCategoryScope(ctx.children[idIndex].getText(), 'global.' + parentCheck)
+            if bigExprType == None:
+                return self.current_function_type
+            return bigExprType
