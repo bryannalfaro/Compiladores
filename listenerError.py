@@ -4,6 +4,14 @@ from antlr4 import *
 from termcolor import cprint
 
 class MyErrorVisitor(Exception):
+    def __init__(self, ctx, message):
+        super().__init__(message)
+        self.message = message
+        self.ctx = ctx
+    def __str__(self) -> str:
+        return f"{self.message} at line {self.ctx.start.line}, column {self.ctx.start.column}"
+    
+
     pass
 
 class MyErrorListener(ErrorListener):

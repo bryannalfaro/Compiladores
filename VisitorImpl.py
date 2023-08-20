@@ -22,6 +22,9 @@ class YAPL(ParseTreeVisitor):
         self.current_function_type = None
      # Visit a parse tree produced by YAPLParser#program.
     def visitProgram(self, ctx:YAPLParser.ProgramContext):
+        for child in ctx.children:
+            if isinstance(child, YAPLParser.Class_grammarContext):
+                self.visitDefineClasses(child)
         self.visitChildren(ctx)
         #search for the main class and it has to be just one
         counterMain = self.symbol_table.getNumberOfEntries("Main")
@@ -42,7 +45,17 @@ class YAPL(ParseTreeVisitor):
             cprint("Main method must have no params","red")
         
 
+    # Visit a parse tree produced by YAPLParser#class_grammar.
+    def visitDefineClasses(self, ctx:YAPLParser.Class_grammarContext): 
+        cprint("IM HERE DEFINING","red")
+        classType = ctx.children[1].getText()
 
+        classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else ObjectType
+        cprint(classType+classParent,"blue")
+        print(ctx.children[1].getText())
+        self.symbol_table.add(classType, 'class', 0, 0, {'parent': classParent})
+        return
+    
     # Visit a parse tree produced by YAPLParser#class_grammar.
     def visitClass_grammar(self, ctx:YAPLParser.Class_grammarContext): 
         
@@ -51,7 +64,7 @@ class YAPL(ParseTreeVisitor):
 
         classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else ObjectType
         
-        self.symbol_table.add(classType, 'class', 0, 0, {'parent': classParent})
+        #self.symbol_table.add(classType, 'class', 0, 0, {'parent': classParent})
         if self.symbol_table.getClassParent(classParent) == classType and classParent != None:
             # If the parent of the parent is the same as the classType, Inheritance cycle
             typeErrorMsg = "Inheritance cycle: " + classType + " " + classParent
@@ -133,11 +146,12 @@ class YAPL(ParseTreeVisitor):
                 if exprType == functionType:
                     hasMatch = True
             if not hasMatch:
-                # Return type of function body nor its parents match expected type
-                errorMsg = 'Type-Check: ' + str(originalExprType) + ' does not conform to ' + functionType + ' in method ' + functionName
-                self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
-                self.visitChildren(ctx)
-                return ErrorType
+                if self.symbol_table.get(functionType) == None:
+                    # Return type of function body nor its parents match expected type
+                    errorMsg = 'Type-Check: ' + str(originalExprType) + ' does not conform to ' + functionType + ' in method ' + functionName
+                    self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                    self.visitChildren(ctx)
+                    return ErrorType
 
         # Check in symbol table if function exists in scope
         if self.symbol_table.getFunctionByScope(functionName, 'global.' + self.current_class) != None or self.symbol_table.getFunctionByScope(functionName, 'global.' + "IO") != None:
@@ -348,7 +362,9 @@ class YAPL(ParseTreeVisitor):
             print("IM HERE CALL METHOD")
             if ctx.children[0].getText() == self.current_function:
                 return self.current_function_type
-            self.errors_list.append(MyErrorVisitor(ctx, "Method " + ctx.children[0].getText() + " not declared"))
+            #TODO change this when class definition error is fixed
+            #self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[0].getText()+" in dispatch on " + self.visit(ctx.children[0])))
+            self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[0].getText()+" in dispatch on " +self.current_class))
             self.visitChildren(ctx)
             return ErrorType
         else:
@@ -659,12 +675,15 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#bigexpr.
     def visitBigexpr(self, ctx:YAPLParser.BigexprContext):
-        self.visitChildren(ctx)
         # Return ID type
+        bigExprType = self.visit(ctx.children[0])
+        for i in range(1, len(ctx.children)):
+            self.visit(ctx.children[i])
+        print("BIG EXPR TYPE",bigExprType)
         idIndex = 4 if ctx.children[1].getText() == '@' else 2
         
-        existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + self.current_class, self.current_function)
-        parentCheck = self.current_class
+        existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + bigExprType, self.current_function)
+        parentCheck = bigExprType
 
         while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
             parentCheck = self.symbol_table.getClassParent(parentCheck)
@@ -675,11 +694,10 @@ class YAPL(ParseTreeVisitor):
             print("IM HERE CALL BIG EXPR METHOD")
             if ctx.children[idIndex].getText() == self.current_function:
                 return self.current_function_type
-            self.errors_list.append(MyErrorVisitor(ctx, "Method " + ctx.children[idIndex].getText() + " not declared"))
+            #TODO change this when class definition error is fixed
+            #self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[idIndex].getText()+" in dispatch on " + self.visit(ctx.children[idIndex])))
+            self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[idIndex].getText()+" in dispatch on " +self.current_class))
+            
             #self.visitChildren(ctx)
             return ErrorType
-        else:
-            bigExprType = self.symbol_table.getCategoryScope(ctx.children[idIndex].getText(), 'global.' + parentCheck)
-            if bigExprType == None:
-                return self.current_function_type
-            return bigExprType
+        return bigExprType
