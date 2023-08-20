@@ -157,7 +157,6 @@ class YAPL(ParseTreeVisitor):
 
         self.current_function = None
         print("Saliendo de function")
-        #@TODO validate position of this
         self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
 
         return
@@ -317,9 +316,8 @@ class YAPL(ParseTreeVisitor):
             return ObjectType
         elif compareExpression == IntType:
             #make casting int to bool
-            
-                self.visit(ctx.children[3])
-                return ObjectType
+            self.visit(ctx.children[3])
+            return ObjectType
         else:
                 self.errors_list.append(MyErrorVisitor(ctx, "Predicate has type " + compareExpression + " instead of BOOL"))
                 self.visitChildren(ctx)
@@ -332,7 +330,6 @@ class YAPL(ParseTreeVisitor):
 
 
     # Visit a parse tree produced by YAPLParser#call.
-    #@TODO how to validate SELF_TYPE
     def visitCall(self, ctx:YAPLParser.CallContext):
         print("CALL")
         self.visitChildren(ctx)
@@ -360,7 +357,7 @@ class YAPL(ParseTreeVisitor):
     def visitNewtype(self, ctx:YAPLParser.NewtypeContext):
         self.visit(ctx.children[0])
         # Return Type
-        return ctx.children[1].getText()
+        return ctx.children[1].getText() if ctx.children[1].getText() != SELF_TYPE else self.current_class
 
 
     # Visit a parse tree produced by YAPLParser#timesdiv.
@@ -509,7 +506,7 @@ class YAPL(ParseTreeVisitor):
             elif child.getText() == ':':
 
                 variableName = ctx.children[index -1].getText()
-                variableType = ctx.children[index + 1].getText()
+                variableType = ctx.children[index + 1].getText() if ctx.children[index + 1].getText() != SELF_TYPE else self.current_class
                 print("VARIABLE NAME",variableName)
                 print("VARIABLE TYPE",variableType)
                 continue
