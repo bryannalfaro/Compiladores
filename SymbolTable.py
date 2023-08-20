@@ -111,6 +111,14 @@ class SymbolTable():
             if entry.type == 'function':
                 if entry.data["name"] == name:
                     return entry.category
+        return None
+                
+    def getCategoryScope(self, name, scope):
+        for entry in self.table:
+            if entry.type == 'function':
+                if entry.data["name"] == name and entry.data["scope"] == scope:
+                    return entry.category
+        return None
     
     def getCallMethodExistence(self,name,  scope,current=None):
         for entry in self.table:

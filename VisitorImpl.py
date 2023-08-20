@@ -336,6 +336,13 @@ class YAPL(ParseTreeVisitor):
         # Return ID type
         print("CHILDREN 0 CALL",ctx.children[0].getText())
         existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[0].getText(), 'global.' + self.current_class, self.current_function)
+        parentCheck = self.current_class
+
+        while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
+            parentCheck = self.symbol_table.getClassParent(parentCheck)
+            if parentCheck != None:
+                existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[0].getText(), 'global.' + parentCheck, self.current_function)
+        
         
         if existenceMethod == False:
             print("IM HERE CALL METHOD")
@@ -346,7 +353,7 @@ class YAPL(ParseTreeVisitor):
             return ErrorType
         else:
             
-            callType = self.symbol_table.getCategory(ctx.children[0].getText())
+            callType = self.symbol_table.getCategoryScope(ctx.children[0].getText(), 'global.' + parentCheck)
             print("CALL TYPE CALL",callType)
             if callType == None:
                 return self.current_function_type
@@ -653,8 +660,26 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#bigexpr.
     def visitBigexpr(self, ctx:YAPLParser.BigexprContext):
         self.visitChildren(ctx)
-
         # Return ID type
         idIndex = 4 if ctx.children[1].getText() == '@' else 2
-        bigExprType = self.symbol_table.getCategory(ctx.children[idIndex].getText())
-        return bigExprType
+        
+        existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + self.current_class, self.current_function)
+        parentCheck = self.current_class
+
+        while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
+            parentCheck = self.symbol_table.getClassParent(parentCheck)
+            if parentCheck != None:
+                existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + parentCheck, self.current_function)
+
+        if existenceMethod == False:
+            print("IM HERE CALL BIG EXPR METHOD")
+            if ctx.children[idIndex].getText() == self.current_function:
+                return self.current_function_type
+            self.errors_list.append(MyErrorVisitor(ctx, "Method " + ctx.children[idIndex].getText() + " not declared"))
+            #self.visitChildren(ctx)
+            return ErrorType
+        else:
+            bigExprType = self.symbol_table.getCategoryScope(ctx.children[idIndex].getText(), 'global.' + parentCheck)
+            if bigExprType == None:
+                return self.current_function_type
+            return bigExprType
