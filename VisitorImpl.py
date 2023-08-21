@@ -367,18 +367,30 @@ class YAPL(ParseTreeVisitor):
         # Return ID type
         print("CHILDREN 0 CALL",ctx.children[0].getText())
         existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[0].getText(), 'global.' + self.current_class, self.current_function)
+        inFunctionTableExistence = self.function_table.getCallMethodExistence(ctx.children[0].getText(), 'global.' + self.current_class, self.current_function)
         parentCheck = self.current_class
+        funcParentCheck = self.current_class
 
         while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
             parentCheck = self.symbol_table.getClassParent(parentCheck)
             if parentCheck != None:
                 existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[0].getText(), 'global.' + parentCheck, self.current_function)
+                if not inFunctionTableExistence:
+                    funcParentCheck = parentCheck
+                    inFunctionTableExistence = self.function_table.getCallMethodExistence(ctx.children[0].getText(), 'global.' + parentCheck, self.current_function)
         
         
         if existenceMethod == False:
             print("IM HERE CALL METHOD")
             if ctx.children[0].getText() == self.current_function:
                 return self.current_function_type
+            if inFunctionTableExistence:
+                # Function defined in non visited class/method
+                callType = self.symbol_table.getCategoryScope(ctx.children[0].getText(), 'global.' + parentCheck)
+                print("CALL TYPE CALL",callType)
+                if callType == None:
+                    return self.current_function_type
+                return callType
             #TODO change this when class definition error is fixed
             #self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[0].getText()+" in dispatch on " + self.visit(ctx.children[0])))
             self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[0].getText()+" in dispatch on " +self.current_class))
@@ -718,7 +730,7 @@ class YAPL(ParseTreeVisitor):
             if ctx.children[idIndex].getText() == self.current_function:
                 return self.current_function_type
             if inFunctionTableExistence:
-                # Function defined in non visited class
+                # Function defined in non visited class/method
                 bigExprType = self.function_table.getCategoryScope(ctx.children[idIndex].getText(), 'global.' + funcParentCheck)
                 if bigExprType == None:
                     return self.current_function_type
