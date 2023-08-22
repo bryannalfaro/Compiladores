@@ -80,7 +80,12 @@ class SymbolTable():
             if entry.category == name and entry.type == "class":
                 count += 1
         return count
-    
+
+    def getClassIndex(self,name):
+        for index, entry in enumerate(self.table):
+            if entry.category == name:
+                return index
+        return None
     def getMethodExistence(self,name,scope):
         count = 0
         for entry in self.table:

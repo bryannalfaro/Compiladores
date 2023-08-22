@@ -35,7 +35,8 @@ def yapl_compile():
         if token.type == YAPLLexer.ERROR:
             results.append(f"Error token: {token.text} at line {token.line}, column {token.column}")
         else:
-            cprint(f"Token {token.text} found on line {token.line}","green")  # Or perform any other desired action with the token
+            pass
+            #cprint(f"Token {token.text} found on line {token.line}","green")  # Or perform any other desired action with the token
 
     parser = YAPLParser(token_stream)
     parser.removeErrorListeners()
@@ -60,11 +61,11 @@ def yapl_compile():
         cprint("Type errors found","red")
         for error in visitor.errors_list:
             print(error)
-        visitor.symbol_table.printTable()
+        # visitor.symbol_table.printTable()
       else:
           cprint("No type errors found","green")
           #print the symbol table
-          visitor.symbol_table.printTable()
+        #   visitor.symbol_table.printTable()
     # Get the errors
     
     for error in visitor.errors_list:

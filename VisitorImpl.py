@@ -33,17 +33,17 @@ class YAPL(ParseTreeVisitor):
         if counterMain != 1:
             self.errors_list.append(MyErrorVisitor(ctx, "There must be one Main class"))
             
-            cprint("Number of Main classes: " + str(counterMain),"red")
+            # cprint("Number of Main classes: " + str(counterMain),"red")
         #validate existence of main method in scope global.Main
         if existenceMainMethod == False:
             self.errors_list.append(MyErrorVisitor(ctx, "Main class must have a main method"))
-            cprint("Main class must have a main method","red")
+            # cprint("Main class must have a main method","red")
 
         #Validate no params on main method
         paramsMainMethod = self.symbol_table.getMethodParams("main","global.Main")
         if len(paramsMainMethod) != 0:
             self.errors_list.append(MyErrorVisitor(ctx, "Main method must have no params"))
-            cprint("Main method must have no params","red")
+            # cprint("Main method must have no params","red")
         
 
     # Visit a parse tree produced by YAPLParser#class_grammar.
@@ -149,6 +149,7 @@ class YAPL(ParseTreeVisitor):
 
         # Check return type matches
         exprType = self.visit(ctx.children[-2])
+        print("EXPR TYPE",exprType, "functionType", functionType)
         #cprint(str(exprType)+str(functionType),"green")
         
         #Evaluation of SELF_TYPE
@@ -163,7 +164,15 @@ class YAPL(ParseTreeVisitor):
                 if exprType == functionType:
                     hasMatch = True
             if not hasMatch:
-                if self.symbol_table.get(functionType) == None:
+                print('FUNC', self.symbol_table.getClassIndex(functionType), functionType)
+                print('EXPR', self.symbol_table.getClassIndex(originalExprType), originalExprType)
+                if originalExprType != ErrorType and self.symbol_table.getClassIndex(functionType) < self.symbol_table.getClassIndex(originalExprType):
+                    # Return type of function body nor its parents match expected type
+                    errorMsg = 'Type-Check: ' + str(originalExprType) + ' does not conform to ' + functionType + ' in method ' + functionName
+                    self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
+                    self.visitChildren(ctx)
+                    return ErrorType
+                if originalExprType == ObjectType:
                     # Return type of function body nor its parents match expected type
                     errorMsg = 'Type-Check: ' + str(originalExprType) + ' does not conform to ' + functionType + ' in method ' + functionName
                     self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
@@ -187,7 +196,7 @@ class YAPL(ParseTreeVisitor):
                     return ErrorType
 
         self.current_function = None
-        print("Saliendo de function")
+        # print("Saliendo de function")
         self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
 
         return
@@ -617,33 +626,41 @@ class YAPL(ParseTreeVisitor):
         #print("COMPARE TYPE",type(ctx.children[1]))
         compareExpression = self.visit(ctx.children[1])
         thenType = self.visit(ctx.children[3])
+        print("THEN TYPE",thenType)
         elseType = self.visit(ctx.children[5])
+        print("else",elseType)
 
         # Defining ifType. Highest common class
-        ifType = ObjectType
         if thenType == elseType:
-            ifType = thenType
+            print("IN THE IF")
+            return thenType
         else:
+            print("IN THE ELSE")
             # Cycle through class parents
+            print("HERE")
             thenTempType = thenType
             elseTempType = elseType
             while thenTempType != None:
                 while elseTempType != None:
                     elseTempType = self.symbol_table.getClassParent(elseTempType)
+                    print("ELSE TEMP TYPE",elseTempType, "THEN TEMP TYPE",thenTempType)
                     if elseTempType == thenTempType:
-                        ifType = elseTempType
-                        break
+                        print("Compare expression",compareExpression == BoolType)
+                        if compareExpression == BoolType or compareExpression == IntType:
+                            print("THEN TEMP TYPE",thenTempType)   
+                            return thenTempType
                 elseTempType = elseType
-                thenTempType = self.symbol_table.getClassParent(thenTempType)
+                if thenTempType == SELF_TYPE and self.symbol_table.getClassParent(thenTempType) == None:
+                    thenTempType = self.symbol_table.getCategory(self.current_function)
+                    print("IF THEN TEMP TYPE",thenTempType)
+                else:
+                    print("ELSE THEN TEMP TYPE",thenTempType)
+                    thenTempType = self.symbol_table.getClassParent(thenTempType)
 
-        if compareExpression == BoolType:
-            return ifType
-        elif compareExpression == IntType:
-            return ifType
-        else:
-            self.errors_list.append(MyErrorVisitor(ctx, "Conditional has type " + compareExpression + " instead of BOOL"))
-            self.visitChildren(ctx)
-            return ErrorType
+            
+        self.errors_list.append(MyErrorVisitor(ctx, "Conditional has type " + compareExpression + " instead of BOOL"))
+        self.visitChildren(ctx)
+        return ErrorType
 
     #@TODO error expr not complete
     # Visit a parse tree produced by YAPLParser#assign.
@@ -651,10 +668,6 @@ class YAPL(ParseTreeVisitor):
         #print the text of all children
         #print("FULL TEXT",ctx.getText(),ctx.children[2])
         #for to iterate children 2
-        for child in ctx.children[2].children:
-            print("GRAND CHILD TEXT",child.getText())
-        for child in ctx.children:
-            print("CHILD TEXT",child.getText())
         #get id of the assignment
         idValue = ctx.children[0].getText()
         #get the expression of the assignment
@@ -705,7 +718,7 @@ class YAPL(ParseTreeVisitor):
                 #self.visitChildren(ctx)
                 return ErrorType
             
-        cprint("TYPES MATCH "+idType+exprType,"blue")
+        # cprint("TYPES MATCH "+idType+exprType,"blue")
 
 
         #assing in symbol table value
@@ -717,7 +730,7 @@ class YAPL(ParseTreeVisitor):
             return exprType
         if self.symbol_table.setVariableValue(idValue, exprValue, classScope):
             return exprType
-        cprint("ASSIGN: "+"ID:"+idValue+" EXPR> "+exprValue,"green")
+        # cprint("ASSIGN: "+"ID:"+idValue+" EXPR> "+exprValue,"green")
         return exprType
 
 
