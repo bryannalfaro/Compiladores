@@ -650,8 +650,8 @@ class YAPL(ParseTreeVisitor):
                             print("THEN TEMP TYPE",thenTempType)   
                             return thenTempType
                 elseTempType = elseType
-                if thenTempType == SELF_TYPE and self.symbol_table.getClassParent(thenTempType) == None:
-                    thenTempType = self.symbol_table.getCategory(self.current_function)
+                if thenTempType == SELF_TYPE and self.function_table.getClassParent(thenTempType) == None:
+                    thenTempType = self.function_table.getCategory(self.current_function)
                     print("IF THEN TEMP TYPE",thenTempType)
                 else:
                     print("ELSE THEN TEMP TYPE",thenTempType)
