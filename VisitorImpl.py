@@ -375,6 +375,7 @@ class YAPL(ParseTreeVisitor):
         self.visitChildren(ctx)
         # Return ID type
         #print("CHILDREN 0 CALL",ctx.children[0].getText())
+        callParameterCount = 0 if len(ctx.children) == 3 else int(((len(ctx.children) - 3) / 2) + 0.5)
         existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[0].getText(), 'global.' + self.current_class, self.current_function)
         inFunctionTableExistence = self.function_table.getCallMethodExistence(ctx.children[0].getText(), 'global.' + self.current_class, self.current_function)
         parentCheck = self.current_class
@@ -388,29 +389,50 @@ class YAPL(ParseTreeVisitor):
                     funcParentCheck = parentCheck
                     inFunctionTableExistence = self.function_table.getCallMethodExistence(ctx.children[0].getText(), 'global.' + parentCheck, self.current_function)
         
-        
         if existenceMethod == False:
-            #print("IM HERE CALL METHOD")
+            print("IM HERE CALL METHOD")
             if ctx.children[0].getText() == self.current_function:
-                return self.current_function_type
+                if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)):
+                    return self.current_function_type
+                else:
+                    self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + callParameterCount + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
+                    return ErrorType
             if inFunctionTableExistence:
                 # Function defined in non visited class/method
-                callType = self.symbol_table.getCategoryScope(ctx.children[0].getText(), 'global.' + parentCheck)
+                callType = self.function_table.getCategoryScope(ctx.children[0].getText(), 'global.' + funcParentCheck)
                 print("CALL TYPE CALL",callType)
-                if callType == None:
-                    return self.current_function_type
-                return callType
+                if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
+                    if callType == None:
+                        return self.current_function_type
+                    return callType
+                else:
+                    localCurrentClass = 'global.' + self.current_class
+                    self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + str(callParameterCount) + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), localCurrentClass)) + ")"))
+                    return ErrorType
             #TODO change this when class definition error is fixed
             #self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[0].getText()+" in dispatch on " + self.visit(ctx.children[0])))
             self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[0].getText()+" in dispatch on " +self.current_class))
-            self.visitChildren(ctx)
             return ErrorType
         else:
-            
+            print("PARENT HERE", parentCheck)
+            print("FUNCTION NAME", ctx.children[0].getText())
             callType = self.symbol_table.getCategoryScope(ctx.children[0].getText(), 'global.' + parentCheck)
-            #print("CALL TYPE CALL",callType)
+            print("CALL TYPE CALL",callType)
             if callType == None:
-                return self.current_function_type
+                print("SEARCHING FUNCTION TABLE")
+                callType = self.function_table.getCategoryScope(ctx.children[0].getText(), 'global.' + parentCheck)
+                if callType == None:
+                    if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
+                        return self.current_function_type
+                    else:
+                        self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + str(callParameterCount) + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
+                        return ErrorType
+                else:
+                    if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
+                        return callType
+                    else:
+                        self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + str(callParameterCount) + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
+                        return ErrorType
             return callType
 
 
@@ -623,7 +645,7 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#if.
     #@TODO check and return the if type or not, for casting.
     def visitIf(self, ctx:YAPLParser.IfContext):
-        #print("COMPARE TYPE",type(ctx.children[1]))
+        print("COMPARE TYPE", self.visit(ctx.children[1]))
         compareExpression = self.visit(ctx.children[1])
         thenType = self.visit(ctx.children[3])
         print("THEN TYPE",thenType)
@@ -632,8 +654,9 @@ class YAPL(ParseTreeVisitor):
 
         # Defining ifType. Highest common class
         if thenType == elseType:
-            print("IN THE IF")
-            return thenType
+            if compareExpression == BoolType or compareExpression == IntType:
+                print("IN THE IF")
+                return thenType
         else:
             print("IN THE ELSE")
             # Cycle through class parents
@@ -651,11 +674,14 @@ class YAPL(ParseTreeVisitor):
                             return thenTempType
                 elseTempType = elseType
                 if thenTempType == SELF_TYPE and self.function_table.getClassParent(thenTempType) == None:
-                    thenTempType = self.function_table.getCategory(self.current_function)
-                    print("IF THEN TEMP TYPE",thenTempType)
+                    if compareExpression == BoolType or compareExpression == IntType:
+                        thenTempType = self.function_table.getCategory(self.current_function)
+                        return thenTempType
                 else:
-                    print("ELSE THEN TEMP TYPE",thenTempType)
-                    thenTempType = self.symbol_table.getClassParent(thenTempType)
+                    if compareExpression == BoolType or compareExpression == IntType:
+                        print("ELSE THEN TEMP TYPE",thenTempType)
+                        thenTempType = self.symbol_table.getClassParent(thenTempType)
+                        return thenTempType
 
             
         self.errors_list.append(MyErrorVisitor(ctx, "Conditional has type " + compareExpression + " instead of BOOL"))
