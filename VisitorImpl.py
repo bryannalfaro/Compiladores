@@ -10,6 +10,7 @@ class YAPL(ParseTreeVisitor):
         self.symbol_table = SymbolTable()
         self.function_table = SymbolTable()
         self.symbol_table.initialize()
+        self.function_table.initialize()
         self.errors_list = []
         self.defaultValues = {
             IntType: 0,
@@ -414,10 +415,14 @@ class YAPL(ParseTreeVisitor):
             self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[0].getText()+" in dispatch on " +self.current_class))
             return ErrorType
         else:
+
             print("PARENT HERE", parentCheck)
             print("FUNCTION NAME", ctx.children[0].getText())
             callType = self.symbol_table.getCategoryScope(ctx.children[0].getText(), 'global.' + parentCheck)
+            ioCallType = self.symbol_table.getCategoryScope(ctx.children[0].getText(), 'global.IO')
             print("CALL TYPE CALL",callType)
+            if ioCallType != None:
+                return ioCallType
             if callType == None:
                 print("SEARCHING FUNCTION TABLE")
                 callType = self.function_table.getCategoryScope(ctx.children[0].getText(), 'global.' + parentCheck)
