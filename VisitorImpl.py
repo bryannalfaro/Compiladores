@@ -3,7 +3,7 @@ from ANTLR.YAPLParser import YAPLParser
 from listenerError import MyErrorVisitor
 from termcolor import cprint    
 from SymbolTable import *
-
+import sys
 class YAPL(ParseTreeVisitor):
     def __init__(self):
         super().__init__()
@@ -13,9 +13,9 @@ class YAPL(ParseTreeVisitor):
         self.function_table.initialize()
         self.errors_list = []
         self.defaultValues = {
-            IntType: 0,
-            BoolType: False,
-            StringType: ""
+            IntType: { 'value': 0, 'size': 8 },
+            BoolType: { 'value': False, 'size': 1 },
+            StringType: { 'value': '', 'size': 1 }
         }
         # Global variables to set Scope
         self.current_class = None
@@ -198,6 +198,9 @@ class YAPL(ParseTreeVisitor):
 
         self.current_function = None
         # print("Saliendo de function")
+        #Check of type is primitive to add size
+        if functionType == IntType or functionType == BoolType or functionType ==StringType:
+            self.symbol_table.add(functionType, 'function',0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
         self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
 
         return
@@ -219,7 +222,7 @@ class YAPL(ParseTreeVisitor):
                 #self.visitChildren(ctx)
                 return ErrorType
         elif variableType in self.defaultValues:
-            variableValue = self.defaultValues[variableType]
+            variableValue = self.defaultValues[variableType]['value']
         else:
             variableValue = None
 
@@ -231,7 +234,11 @@ class YAPL(ParseTreeVisitor):
             return ErrorType
             
         
-        self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
+        # check for size 
+        if variableType in self.defaultValues:
+            self.symbol_table.add(variableType, 'variable', self.defaultValues[variableType]['size'], 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
+        else:
+            self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
         return self.visitChildren(ctx)
 
 
@@ -240,7 +247,7 @@ class YAPL(ParseTreeVisitor):
         attributeName = ctx.children[0].getText()
         attributeType = ctx.children[2].getText()
         if attributeType in self.defaultValues:
-            attributeValue = self.defaultValues[attributeType]
+            attributeValue = self.defaultValues[attributeType]['value']
         else:
             attributeValue = None
         attribute = {
@@ -250,7 +257,11 @@ class YAPL(ParseTreeVisitor):
             'scope': 'local.' + self.current_class + '.' + self.current_function
         },
         
-        self.symbol_table.add(attributeType, 'variable', 0, 0, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
+        #Check size
+        if attributeType in self.defaultValues:
+            self.symbol_table.add(attributeType, 'variable', self.defaultValues[attributeType]['size'], 0, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
+        else:
+            self.symbol_table.add(attributeType, 'variable', 0, 0, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
         return attribute
 
 
@@ -582,7 +593,7 @@ class YAPL(ParseTreeVisitor):
             #print("INSIDE FOR")
             if child.getText() == ',' or child.getText() == 'IN' or child.getText() == 'in':
                 if variableType in self.defaultValues:
-                    variableValue = self.defaultValues[variableType]
+                    variableValue = self.defaultValues[variableType]['value']
                 else:
                     variableValue = None
                 

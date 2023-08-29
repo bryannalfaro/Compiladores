@@ -1,11 +1,11 @@
 class Main inherits IO { 
-  a: Int <- 8;
+  a: Int;
   b: Int <- sum(5);
     main() : Object { 
       "HELLO"
     } ; 
   
-  sum(): Int {
+  sum(c:Int): Int {
   	1
   };
   
