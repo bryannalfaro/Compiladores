@@ -235,8 +235,12 @@ class YAPL(ParseTreeVisitor):
             
         
         # check for size 
-        if variableType in self.defaultValues:
+        if variableType in self.defaultValues and variableType != StringType:
             self.symbol_table.add(variableType, 'variable', self.defaultValues[variableType]['size'], 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
+        elif variableType == StringType:
+            #size of string * length of variable
+            size = (self.defaultValues[variableType]['size'] * len(variableValue))-1
+            self.symbol_table.add(variableType, 'variable', size, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
         else:
             self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
         return self.visitChildren(ctx)
@@ -258,8 +262,12 @@ class YAPL(ParseTreeVisitor):
         },
         
         #Check size
-        if attributeType in self.defaultValues:
+        if attributeType in self.defaultValues and attributeType != StringType:
             self.symbol_table.add(attributeType, 'variable', self.defaultValues[attributeType]['size'], 0, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
+        elif attributeType == StringType:
+            #size of string * length of variable
+            size = (self.defaultValues[attributeType]['size'] * len(attributeValue))-1
+            self.symbol_table.add(attributeType, 'variable', size, 0, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
         else:
             self.symbol_table.add(attributeType, 'variable', 0, 0, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
         return attribute
