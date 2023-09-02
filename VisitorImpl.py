@@ -212,7 +212,7 @@ class YAPL(ParseTreeVisitor):
         #     self.symbol_table.add(functionType, 'function', size, self.offset_acc, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
         #     self.offset_acc += size
         # else:
-        self.symbol_table.add(functionType, 'function', None, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
+        self.symbol_table.add(functionType, 'function', None, self.offset_acc, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
 
         return
 
