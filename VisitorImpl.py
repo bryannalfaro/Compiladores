@@ -22,6 +22,7 @@ class YAPL(ParseTreeVisitor):
         self.current_function = None
         self.current_let = 0
         self.current_function_type = None
+        self.offset_acc = 0
      # Visit a parse tree produced by YAPLParser#program.
     def visitProgram(self, ctx:YAPLParser.ProgramContext):
         for child in ctx.children:
@@ -66,6 +67,7 @@ class YAPL(ParseTreeVisitor):
         
         classType = ctx.children[1].getText()
         self.current_class = classType
+        self.offset_acc = 0
 
         classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else ObjectType
         
@@ -243,12 +245,14 @@ class YAPL(ParseTreeVisitor):
         
         # check for size 
         if variableType in self.defaultValues and variableType != StringType:
-            self.symbol_table.add(variableType, 'variable', self.defaultValues[variableType]['size'], 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
+            self.symbol_table.add(variableType, 'variable', self.defaultValues[variableType]['size'], self.offset_acc, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
+            self.offset_acc += self.defaultValues[variableType]['size']
         elif variableType == StringType:
             #size of string * length of variable
             #-1 because of the quotes but the end of string
             size = (self.defaultValues[variableType]['size'] * len(variableValue))-1
-            self.symbol_table.add(variableType, 'variable', size, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
+            self.symbol_table.add(variableType, 'variable', size, self.offset_acc, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
+            self.offset_acc += size
         else:
             self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
         return self.visitChildren(ctx)
@@ -271,12 +275,14 @@ class YAPL(ParseTreeVisitor):
         
         #Check size
         if attributeType in self.defaultValues and attributeType != StringType:
-            self.symbol_table.add(attributeType, 'variable', self.defaultValues[attributeType]['size'], 0, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
+            self.symbol_table.add(attributeType, 'variable', self.defaultValues[attributeType]['size'], self.offset_acc, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
+            self.offset_acc += self.defaultValues[attributeType]['size']
         elif attributeType == StringType:
             #size of string * length of variable
             #-1 because of the quotes but the end of string
             size = (self.defaultValues[attributeType]['size'] * len(attributeValue))-1
-            self.symbol_table.add(attributeType, 'variable', size, 0, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
+            self.symbol_table.add(attributeType, 'variable', size, self.offset_acc, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
+            self.offset_acc += size
         else:
             self.symbol_table.add(attributeType, 'variable', 0, 0, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
         return attribute
@@ -617,12 +623,14 @@ class YAPL(ParseTreeVisitor):
                 #print("SI ENTRO")
                 #sizes
                 if variableType in self.defaultValues and variableType != StringType:
-                    self.symbol_table.add(variableType, 'variable', self.defaultValues[variableType]['size'], 0, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
+                    self.symbol_table.add(variableType, 'variable', self.defaultValues[variableType]['size'], self.offset_acc, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
+                    self.offset_acc += self.defaultValues[variableType]['size']
                 elif variableType == StringType:
                     #size of string * length of variable
                     #-1 because of the quotes but the end of string
                     size = (self.defaultValues[variableType]['size'] * len(variableValue))-1
-                    self.symbol_table.add(variableType, 'variable', size, 0, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
+                    self.symbol_table.add(variableType, 'variable', size, self.offset_acc, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
+                    self.offset_acc += size
                 else:
                     self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
                 variableName = None
