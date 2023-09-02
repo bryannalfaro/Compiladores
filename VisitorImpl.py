@@ -202,13 +202,15 @@ class YAPL(ParseTreeVisitor):
         # print("Saliendo de function")
         #Check of type is primitive to add size
         if functionType == IntType or functionType == BoolType:
-            self.symbol_table.add(functionType, 'function',self.defaultValues[functionType]['size'], 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
+            self.symbol_table.add(functionType, 'function',self.defaultValues[functionType]['size'], self.offset_acc, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
+            self.offset_acc += self.defaultValues[functionType]['size']
         elif functionType == StringType:
             #size of ctx.children[-2]
             print(len(ctx.children[-2].getText()))
             #-1 because of the quotes but the end of string
             size = (self.defaultValues[functionType]['size'] * len(ctx.children[-2].getText()))-1 
-            self.symbol_table.add(functionType, 'function', size, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
+            self.symbol_table.add(functionType, 'function', size, self.offset_acc, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
+            self.offset_acc += size
         else:
             self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
 
