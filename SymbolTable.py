@@ -43,9 +43,9 @@ class SymbolTable():
         #Add IO class
         self.table.append(TableEntry(IOType,"class", 0,0, {"parent": ObjectType}))
         #Add Int class
-        self.table.append(TableEntry(IntType,"class", 0,0, {"parent": ObjectType}))
+        self.table.append(TableEntry(IntType,"class", 8,0, {"parent": ObjectType}))
         #Add Bool class
-        self.table.append(TableEntry(BoolType,"class", 0,0, {"parent": ObjectType}))
+        self.table.append(TableEntry(BoolType,"class", 1,0, {"parent": ObjectType}))
         #Add String class
         self.table.append(TableEntry(StringType,"class", 0,0, {"parent": ObjectType}))
 
@@ -165,6 +165,63 @@ class SymbolTable():
                 if entry.data["name"] == name and entry.data["scope"] == scope:
                     return entry
         return None
+
+    def classHasUnsized(self, className):
+        for entry in self.table:
+            if entry.type == 'function' or entry.type == 'variable':
+                if entry.data["scope"].startswith('local.' + className) and entry.width == None:
+                    return True
+        return False
+
+    def functionHasUnsized(self, functionName, className):
+        initScope = 'local.' + className + '.' + functionName
+        for entry in self.table:
+            if entry.type == 'variable':
+                if entry.data["scope"].startswith(initScope):
+                    if entry.width == None:
+                        return True
+        return False
+
+    def getFunctionSize(self, functionName, className):
+        initScope = 'local.' + className + '.' + functionName
+        size_acc = 0
+        for entry in self.table:
+            if entry.type == 'variable':
+                if entry.data["scope"].startswith(initScope):
+                    if entry.width == None:
+                        return None
+                    size_acc += entry.width
+        return size_acc
+
+    def getVariableSize(self, classType):
+        for entry in self.table:
+            if entry.type == 'class':
+                if entry.category == classType:
+                    print('HEEERE')
+                    return entry.width
+        return None
+
+    def getClassSize(self, className):
+        size_acc = 0
+        for entry in self.table:
+            if entry.type == 'function' or entry.type == 'variable':
+                if entry.data["scope"].startswith('global.' + className):
+                    if entry.width == None:
+                        return None
+                    size_acc += entry.width
+        return size_acc
+
+    def getAllUnsized(self):
+        unsized_elements = []
+        for entry in self.table:
+            if entry.width == None:
+                unsized_elements.append(entry)
+        return unsized_elements
+
+    def setSize(self, originalEntry, size):
+        for entry in self.table:
+            if entry == originalEntry:
+                entry.width = size
 
 
     def set(self, name, value):

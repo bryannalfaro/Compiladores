@@ -59,7 +59,7 @@ class YAPL(ParseTreeVisitor):
         classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else ObjectType
         #cprint(classType+classParent,"blue")
         #print(ctx.children[1].getText())
-        self.symbol_table.add(classType, 'class', 0, 0, {'parent': classParent})
+        self.symbol_table.add(classType, 'class', None, 0, {'parent': classParent})
         return
     
     # Visit a parse tree produced by YAPLParser#class_grammar.
@@ -152,7 +152,7 @@ class YAPL(ParseTreeVisitor):
 
         # Check return type matches
         exprType = self.visit(ctx.children[-2])
-        print("EXPR TYPE",exprType, "functionType", functionType)
+        #print("EXPR TYPE",exprType, "functionType", functionType)
         #cprint(str(exprType)+str(functionType),"green")
         
         #Evaluation of SELF_TYPE
@@ -167,8 +167,8 @@ class YAPL(ParseTreeVisitor):
                 if exprType == functionType:
                     hasMatch = True
             if not hasMatch:
-                print('FUNC', self.symbol_table.getClassIndex(functionType), functionType)
-                print('EXPR', self.symbol_table.getClassIndex(originalExprType), originalExprType)
+                #print('FUNC', self.symbol_table.getClassIndex(functionType), functionType)
+                #print('EXPR', self.symbol_table.getClassIndex(originalExprType), originalExprType)
                 if originalExprType != ErrorType and self.symbol_table.getClassIndex(functionType) < self.symbol_table.getClassIndex(originalExprType):
                     # Return type of function body nor its parents match expected type
                     errorMsg = 'Type-Check: ' + str(originalExprType) + ' does not conform to ' + functionType + ' in method ' + functionName
@@ -199,20 +199,20 @@ class YAPL(ParseTreeVisitor):
                     return ErrorType
 
         self.current_function = None
-        # print("Saliendo de function")
+        # #print("Saliendo de function")
         #Check of type is primitive to add size
-        if functionType == IntType or functionType == BoolType:
-            self.symbol_table.add(functionType, 'function',self.defaultValues[functionType]['size'], self.offset_acc, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
-            self.offset_acc += self.defaultValues[functionType]['size']
-        elif functionType == StringType:
-            #size of ctx.children[-2]
-            print(len(ctx.children[-2].getText()))
-            #-1 because of the quotes but the end of string
-            size = (self.defaultValues[functionType]['size'] * len(ctx.children[-2].getText()))-1 
-            self.symbol_table.add(functionType, 'function', size, self.offset_acc, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
-            self.offset_acc += size
-        else:
-            self.symbol_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
+        # if functionType == IntType or functionType == BoolType:
+        #     self.symbol_table.add(functionType, 'function',self.defaultValues[functionType]['size'], self.offset_acc, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
+        #     self.offset_acc += self.defaultValues[functionType]['size']
+        # elif functionType == StringType:
+        #     #size of ctx.children[-2]
+        #     #print(len(ctx.children[-2].getText()))
+        #     #-1 because of the quotes but the end of string
+        #     size = (self.defaultValues[functionType]['size'] * len(ctx.children[-2].getText()))-1 
+        #     self.symbol_table.add(functionType, 'function', size, self.offset_acc, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
+        #     self.offset_acc += size
+        # else:
+        self.symbol_table.add(functionType, 'function', None, 0, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
 
         return
 
@@ -256,7 +256,7 @@ class YAPL(ParseTreeVisitor):
             self.symbol_table.add(variableType, 'variable', size, self.offset_acc, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
             self.offset_acc += size
         else:
-            self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
+            self.symbol_table.add(variableType, 'variable', None, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
         return self.visitChildren(ctx)
 
 
@@ -286,7 +286,7 @@ class YAPL(ParseTreeVisitor):
             self.symbol_table.add(attributeType, 'variable', size, self.offset_acc, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
             self.offset_acc += size
         else:
-            self.symbol_table.add(attributeType, 'variable', 0, 0, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
+            self.symbol_table.add(attributeType, 'variable', None, 0, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
         return attribute
 
 
@@ -427,7 +427,7 @@ class YAPL(ParseTreeVisitor):
                     inFunctionTableExistence = self.function_table.getCallMethodExistence(ctx.children[0].getText(), 'global.' + parentCheck, self.current_function)
         
         if existenceMethod == False:
-            print("IM HERE CALL METHOD")
+            #print("IM HERE CALL METHOD")
             if ctx.children[0].getText() == self.current_function:
                 if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)):
                     return self.current_function_type
@@ -437,7 +437,7 @@ class YAPL(ParseTreeVisitor):
             if inFunctionTableExistence:
                 # Function defined in non visited class/method
                 callType = self.function_table.getCategoryScope(ctx.children[0].getText(), 'global.' + funcParentCheck)
-                print("CALL TYPE CALL",callType)
+                #print("CALL TYPE CALL",callType)
                 if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
                     if callType == None:
                         return self.current_function_type
@@ -452,15 +452,15 @@ class YAPL(ParseTreeVisitor):
             return ErrorType
         else:
 
-            print("PARENT HERE", parentCheck)
-            print("FUNCTION NAME", ctx.children[0].getText())
+            #print("PARENT HERE", parentCheck)
+            #print("FUNCTION NAME", ctx.children[0].getText())
             callType = self.symbol_table.getCategoryScope(ctx.children[0].getText(), 'global.' + parentCheck)
             ioCallType = self.symbol_table.getCategoryScope(ctx.children[0].getText(), 'global.IO')
-            print("CALL TYPE CALL",callType)
+            #print("CALL TYPE CALL",callType)
             if ioCallType != None:
                 return ioCallType
             if callType == None:
-                print("SEARCHING FUNCTION TABLE")
+                #print("SEARCHING FUNCTION TABLE")
                 callType = self.function_table.getCategoryScope(ctx.children[0].getText(), 'global.' + parentCheck)
                 if callType == None:
                     if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
@@ -634,7 +634,7 @@ class YAPL(ParseTreeVisitor):
                     self.symbol_table.add(variableType, 'variable', size, self.offset_acc, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
                     self.offset_acc += size
                 else:
-                    self.symbol_table.add(variableType, 'variable', 0, 0, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
+                    self.symbol_table.add(variableType, 'variable', None, 0, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
                 variableName = None
                 variableType = None
                 variableValue = None
@@ -697,32 +697,32 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#if.
     #@TODO check and return the if type or not, for casting.
     def visitIf(self, ctx:YAPLParser.IfContext):
-        print("COMPARE TYPE", self.visit(ctx.children[1]))
+        #print("COMPARE TYPE", self.visit(ctx.children[1]))
         compareExpression = self.visit(ctx.children[1])
         thenType = self.visit(ctx.children[3])
-        print("THEN TYPE",thenType)
+        #print("THEN TYPE",thenType)
         elseType = self.visit(ctx.children[5])
-        print("else",elseType)
+        #print("else",elseType)
 
         # Defining ifType. Highest common class
         if thenType == elseType:
             if compareExpression == BoolType or compareExpression == IntType:
-                print("IN THE IF")
+                #print("IN THE IF")
                 return thenType
         else:
-            print("IN THE ELSE")
+            #print("IN THE ELSE")
             # Cycle through class parents
-            print("HERE")
+            #print("HERE")
             thenTempType = thenType
             elseTempType = elseType
             while thenTempType != None:
                 while elseTempType != None:
                     elseTempType = self.symbol_table.getClassParent(elseTempType)
-                    print("ELSE TEMP TYPE",elseTempType, "THEN TEMP TYPE",thenTempType)
+                    #print("ELSE TEMP TYPE",elseTempType, "THEN TEMP TYPE",thenTempType)
                     if elseTempType == thenTempType:
-                        print("Compare expression",compareExpression == BoolType)
+                        #print("Compare expression",compareExpression == BoolType)
                         if compareExpression == BoolType or compareExpression == IntType:
-                            print("THEN TEMP TYPE",thenTempType)   
+                            #print("THEN TEMP TYPE",thenTempType)   
                             return thenTempType
                 elseTempType = elseType
                 if thenTempType == SELF_TYPE and self.function_table.getClassParent(thenTempType) == None:
@@ -731,7 +731,7 @@ class YAPL(ParseTreeVisitor):
                         return thenTempType
                 else:
                     if compareExpression == BoolType or compareExpression == IntType:
-                        print("ELSE THEN TEMP TYPE",thenTempType)
+                        #print("ELSE THEN TEMP TYPE",thenTempType)
                         thenTempType = self.symbol_table.getClassParent(thenTempType)
                         return thenTempType
 
@@ -783,7 +783,7 @@ class YAPL(ParseTreeVisitor):
         hasMatch = False
         if exprType != idType:
             while exprType != None:
-                cprint("EXPR TYPE busqueda: "+exprType,"yellow")
+                #cprint("EXPR TYPE busqueda: "+exprType,"yellow")
                 exprType = self.symbol_table.getClassParent(exprType)
                 if exprType == idType:
                     hasMatch = True

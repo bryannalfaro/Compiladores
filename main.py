@@ -24,11 +24,11 @@ def evaluate_expression(input_str):
 
 
 
-    for token in token_stream.getTokens(0, len(token_stream.tokens) - 1):
-        if token.type == YAPLLexer.ERROR:
-            cprint(f"Error token: {token.text} at line {token.line}, column {token.column}","red")
-        else:
-            cprint(f"Token {token.text} found on line {token.line}","green")  # Or perform any other desired action with the token
+    # for token in token_stream.getTokens(0, len(token_stream.tokens) - 1):
+    #     if token.type == YAPLLexer.ERROR:
+    #         cprint(f"Error token: {token.text} at line {token.line}, column {token.column}","red")
+    #     else:
+    #         cprint(f"Token {token.text} found on line {token.line}","green")  # Or perform any other desired action with the token
 
     parser = YAPLParser(token_stream)
     parser.removeErrorListeners()
@@ -45,23 +45,42 @@ def evaluate_expression(input_str):
         print('errors found')
         return None
     else:
-      #command to show tree
-    #   command = f"antlr4-parse YAPL.g4 program -gui"
-    #   process = os.popen(command, 'w')
-    #   process.write(input_string)
-    #   process.close()
-      visitor.visit(tree)
-      #see errors
-      if len(visitor.errors_list) > 0:
-        cprint("Type errors found","red")
-        for error in visitor.errors_list:
-            print(error)
-        visitor.symbol_table.printTable()
-      else:
-          cprint("No type errors found","green")
-          #print the symbol table
-          visitor.symbol_table.printTable()
-      return None
+        #command to show tree
+        #   command = f"antlr4-parse YAPL.g4 program -gui"
+        #   process = os.popen(command, 'w')
+        #   process.write(input_string)
+        #   process.close()
+        visitor.visit(tree)
+        #see errors
+        if len(visitor.errors_list) > 0:
+            cprint("Type errors found","red")
+            for error in visitor.errors_list:
+                print(error)
+            visitor.symbol_table.printTable()
+        else:
+            cprint("No type errors found","green")
+            #print the symbol table
+            while len(visitor.symbol_table.getAllUnsized()) > 0:
+                allUnsized = visitor.symbol_table.getAllUnsized()
+                for unsized in allUnsized:
+                    if unsized.type == 'variable':
+                        print('VARIABLE: ' + unsized.data['name'])
+                        visitor.symbol_table.setSize(unsized, visitor.symbol_table.getVariableSize(unsized.category))
+                    elif unsized.type == 'function':
+                        parent = unsized.data["scope"].split('.')[1]
+                        if visitor.symbol_table.functionHasUnsized(unsized.data['name'], parent):
+                            continue
+                        else:
+                            visitor.symbol_table.setSize(unsized, visitor.symbol_table.getFunctionSize(unsized.data['name'], parent))
+                    elif unsized.type == 'class':
+                        print('CLASS' + unsized.category)
+                        if not visitor.symbol_table.classHasUnsized(unsized.category):
+                            visitor.symbol_table.setSize(unsized, visitor.symbol_table.getClassSize(unsized.category))
+                        else:
+                            visitor.symbol_table.setSize(unsized, 1)
+                        
+            visitor.symbol_table.printTable()
+        return None
 
 
 
