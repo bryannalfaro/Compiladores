@@ -64,7 +64,6 @@ def evaluate_expression(input_str):
                 allUnsized = visitor.symbol_table.getAllUnsized()
                 for unsized in allUnsized:
                     if unsized.type == 'variable':
-                        print('VARIABLE: ' + unsized.data['name'])
                         visitor.symbol_table.setSize(unsized, visitor.symbol_table.getVariableSize(unsized.category))
                     elif unsized.type == 'function':
                         parent = unsized.data["scope"].split('.')[1]
@@ -73,7 +72,6 @@ def evaluate_expression(input_str):
                         else:
                             visitor.symbol_table.setSize(unsized, visitor.symbol_table.getFunctionSize(unsized.data['name'], parent))
                     elif unsized.type == 'class':
-                        print('CLASS' + unsized.category)
                         if not visitor.symbol_table.classHasUnsized(unsized.category):
                             visitor.symbol_table.setSize(unsized, visitor.symbol_table.getClassSize(unsized.category))
                         else:

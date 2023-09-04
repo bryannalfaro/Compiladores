@@ -197,7 +197,6 @@ class SymbolTable():
         for entry in self.table:
             if entry.type == 'class':
                 if entry.category == classType:
-                    print('HEEERE')
                     return entry.width
         return None
 
