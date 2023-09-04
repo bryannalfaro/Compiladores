@@ -254,7 +254,7 @@ class YAPL(ParseTreeVisitor):
         elif variableType == StringType:
             #size of string * length of variable
             #-1 because of the quotes but the end of string
-            size = (self.defaultValues[variableType]['size'] * len(variableValue))-1
+            size = (self.defaultValues[variableType]['size'] * len(variableValue))+9
             self.symbol_table.add(variableType, 'variable', size, self.global_offset, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
             self.global_offset += size
         else:
@@ -284,7 +284,7 @@ class YAPL(ParseTreeVisitor):
         elif attributeType == StringType:
             #size of string * length of variable
             #-1 because of the quotes but the end of string
-            size = (self.defaultValues[attributeType]['size'] * len(attributeValue))-1
+            size = (self.defaultValues[attributeType]['size'] * len(attributeValue))+9
             self.symbol_table.add(attributeType, 'variable', size, self.local_offset, {'name': attributeName, 'value':attributeValue, 'scope': 'local.' + self.current_class + '.' + self.current_function})
             self.local_offset += size
         else:
@@ -632,7 +632,7 @@ class YAPL(ParseTreeVisitor):
                 elif variableType == StringType:
                     #size of string * length of variable
                     #-1 because of the quotes but the end of string
-                    size = (self.defaultValues[variableType]['size'] * len(variableValue))-1
+                    size = (self.defaultValues[variableType]['size'] * len(variableValue))+9
                     self.symbol_table.add(variableType, 'variable', size, self.local_offset, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
                     self.local_offset += size
                 else:
