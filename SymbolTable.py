@@ -221,6 +221,41 @@ class SymbolTable():
         for entry in self.table:
             if entry == originalEntry:
                 entry.width = size
+                return
+
+    def setOffset(self, originalEntry, offset):
+        for entry in self.table:
+            if entry == originalEntry:
+                entry.offset = offset
+                return
+
+    def reviewOffsets(self):
+        classes = []
+        # Get all defined classes
+        for entry in self.table:
+            if entry.type == 'class':
+                if entry.category != ObjectType and entry.category != IOType and entry.category != IntType and entry.category != BoolType and entry.category != StringType:
+                    classes.append(entry)
+        # For each class, get variables and functions
+        for tableClass in classes:
+            global_offset = 0
+            features = []
+            for entry in self.table:
+                if (entry.type == 'variable' or entry.type == 'function') and entry.data["scope"] == ('global.' + tableClass.category):
+                    features.append(entry)
+            
+            for feat in features:
+                self.setOffset(feat, global_offset)
+                if feat.type == 'function':
+                    function_vars = []
+                    for entry in self.table:
+                        if entry.type == 'variable' and entry.data["scope"].startswith('local.' + tableClass.category + '.' + feat.data["name"]):
+                            function_vars.append(entry)
+                    local_offset = global_offset
+                    for local_var in function_vars:
+                        self.setOffset(local_var, local_offset)
+                        local_offset += local_var.width
+                global_offset += feat.width
 
 
     def set(self, name, value):
