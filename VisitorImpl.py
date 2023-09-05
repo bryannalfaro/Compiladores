@@ -13,7 +13,7 @@ class YAPL(ParseTreeVisitor):
         self.function_table.initialize()
         self.errors_list = []
         self.defaultValues = {
-            IntType: { 'value': 0, 'size': 8 },
+            IntType: { 'value': 0, 'size': 4 },
             BoolType: { 'value': False, 'size': 1 },
             StringType: { 'value': '', 'size': 1 }
         }

@@ -43,7 +43,7 @@ class SymbolTable():
         #Add IO class
         self.table.append(TableEntry(IOType,"class", 0,0, {"parent": ObjectType}))
         #Add Int class
-        self.table.append(TableEntry(IntType,"class", 8,0, {"parent": ObjectType}))
+        self.table.append(TableEntry(IntType,"class", 4,0, {"parent": ObjectType}))
         #Add Bool class
         self.table.append(TableEntry(BoolType,"class", 1,0, {"parent": ObjectType}))
         #Add String class
