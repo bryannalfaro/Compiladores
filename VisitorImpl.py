@@ -3,6 +3,8 @@ from ANTLR.YAPLParser import YAPLParser
 from listenerError import MyErrorVisitor
 from termcolor import cprint    
 from SymbolTable import *
+from threeAddress import *
+from tripletCode import *
 import sys
 class YAPL(ParseTreeVisitor):
     def __init__(self):
@@ -11,7 +13,9 @@ class YAPL(ParseTreeVisitor):
         self.function_table = SymbolTable()
         self.symbol_table.initialize()
         self.function_table.initialize()
+        self.threeCode = ThreeAddressCode()
         self.errors_list = []
+
         self.defaultValues = {
             IntType: { 'value': 0, 'size': 4 },
             BoolType: { 'value': False, 'size': 1 },
@@ -299,9 +303,19 @@ class YAPL(ParseTreeVisitor):
         results = []
         for plus_node in ctx.expr():
             #print("plus node",plus_node.getText())
-            results.append(self.visit(plus_node))
+            #Se guarda en un array para obtener el texto de los nodos
+            results.append([self.visit(plus_node), plus_node.getText()])
+
         left = results[0]
         right = results[-1]
+
+        #create triplet
+        plus_triplet = Triplet(ctx.children[1].getText(), left[1], right[1])
+        result = self.threeCode.add(plus_triplet)
+        cprint("PLUS TRIPLET"+str(result),"blue")
+
+        left=  left[0]
+        right = right[0]
         #print("LEFT: "+left+" RIGHT: "+right)
         #if the type of the left and right side are not the same, then add an error
         if left != right:
