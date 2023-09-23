@@ -186,11 +186,17 @@ const Landing = () => {
         </div>
       </div>
       <div className="flex flex-row space-x-4 items-start px-4 py-4">
-        <div className="flex flex-col w-full h-full justify-start items-end">
+        <div className="flex flex-col w-full h-full justify-start items-start">
           <CodeEditorWindow
             code={code}
             onChange={onChange}
             language={language?.value}
+            theme={theme.value}
+          />
+          <h1 className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 mb-2">Three Address Code </h1>
+          <CodeEditorWindow
+            code={code}
+            language={"txt"}
             theme={theme.value}
           />
         </div>
