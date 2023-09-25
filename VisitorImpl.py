@@ -34,6 +34,8 @@ class YAPL(ParseTreeVisitor):
             if isinstance(child, YAPLParser.Class_grammarContext):
                 self.visitDefineClasses(child)
         self.visitChildren(ctx)
+        for triplet in self.threeCode.triplets_list:
+            print(triplet)
         #search for the main class and it has to be just one
         counterMain = self.symbol_table.getNumberOfEntries("Main")
         existenceMainMethod = self.symbol_table.getMethodExistence("main","global.Main")
@@ -232,7 +234,8 @@ class YAPL(ParseTreeVisitor):
             variableValue = ctx.children[4].getText()
             #print('VARIABLE VALUE', variableValue)
             valueType  = self.visit(ctx.children[4]) #Type of value to assign
-            
+            print('VARIABLE VALUE TYPE', valueType)
+            valueType = valueType[0]
             #check if the types are the same
             if variableType != valueType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Variable type mismatch"))
@@ -253,6 +256,7 @@ class YAPL(ParseTreeVisitor):
         
         # check for size 
         if variableType in self.defaultValues and variableType != StringType:
+            print('ADDING', variableName, variableType, variableValue)
             self.symbol_table.add(variableType, 'variable', self.defaultValues[variableType]['size'], self.global_offset, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
             self.global_offset += self.defaultValues[variableType]['size']
         elif variableType == StringType:
@@ -262,6 +266,7 @@ class YAPL(ParseTreeVisitor):
             self.symbol_table.add(variableType, 'variable', size, self.global_offset, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
             self.global_offset += size
         else:
+            print('ADDING', variableName, variableType, variableValue)
             self.symbol_table.add(variableType, 'variable', None, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
         return self.visitChildren(ctx)
 
@@ -304,26 +309,29 @@ class YAPL(ParseTreeVisitor):
         for plus_node in ctx.expr():
             #print("plus node",plus_node.getText())
             #Se guarda en un array para obtener el texto de los nodos
-            results.append([self.visit(plus_node), plus_node.getText()])
+            results.append(self.visit(plus_node))
 
         left = results[0]
         right = results[-1]
 
+
+
         #create triplet
+        temporal = self.threeCode.getTemporal()
         plus_triplet = Triplet(ctx.children[1].getText(), left[1], right[1])
         result = self.threeCode.add(plus_triplet)
         cprint("PLUS TRIPLET"+str(result),"blue")
 
         left=  left[0]
         right = right[0]
-        #print("LEFT: "+left+" RIGHT: "+right)
+        print('PLUS', left, right)
         #if the type of the left and right side are not the same, then add an error
         if left != right:
             #make implicit casting of bool to int
             if left == BoolType and right == IntType:
-                return IntType
+                return IntType, temporal
             elif left == IntType and right == BoolType:
-                return IntType
+                return IntType, temporal
             else:
                 typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
                 self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
@@ -331,7 +339,7 @@ class YAPL(ParseTreeVisitor):
                 return ErrorType
         else:
             if left == IntType:
-                return IntType
+                return IntType, temporal
             elif left == BoolType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
                 self.visitChildren(ctx)
@@ -419,7 +427,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#int.
     def visitInt(self, ctx:YAPLParser.IntContext):
-        return IntType
+        return IntType, ctx.getText()
 
 
     # Visit a parse tree produced by YAPLParser#call.
@@ -510,14 +518,25 @@ class YAPL(ParseTreeVisitor):
             results.append(self.visit(times_node))
         left = results[0]
         right = results[-1]
+        print(left, right)
+         #create triplet
+         #create temp
+        temporal = self.threeCode.getTemporal()
+        times_triplet = Triplet(ctx.children[1].getText(), left[1], right[1])
+        result = self.threeCode.add(times_triplet)
+
+        cprint("TIMES TRIPLET"+str(result),"blue")
+
+        left=  left[0]
+        right = right[0]
         #print("TIMES LEFT RIGHT",left,right)
         #if the type of the left and right side are not the same, then add an error
         if left != right:
             #make implicit casting of bool to int
             if left == BoolType and right == IntType:
-                return IntType
+                return IntType, temporal
             elif left == IntType and right == BoolType:
-                return IntType
+                return IntType, temporal
             else:
                 typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
                 self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
@@ -525,7 +544,7 @@ class YAPL(ParseTreeVisitor):
                 return ErrorType
         else:
             if left == IntType:
-                return IntType
+                return IntType, temporal
             elif left == BoolType:
                 self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
                 self.visitChildren(ctx)
@@ -544,8 +563,9 @@ class YAPL(ParseTreeVisitor):
         results = []
         for compare_node in ctx.expr():
             results.append(self.visit(compare_node))
-        left = results[0]
-        right = results[-1]
+        left = results[0][0]
+        right = results[-1][0]
+        print("COMPARE LEFT RIGHT",left,right)
         #if the type of the left and right side are not the same, then add an error
 
         if left != right:
@@ -707,7 +727,7 @@ class YAPL(ParseTreeVisitor):
                     self.visitChildren(ctx)
                     return ErrorType
             else:
-                return variable
+                return variable, ctx.getText()
 
     
     # Visit a parse tree produced by YAPLParser#if.
@@ -772,6 +792,7 @@ class YAPL(ParseTreeVisitor):
         
         #get type of the expression
         exprType = self.visit(ctx.children[2])
+        exprType = exprType[0]
 
         #print("EXPRTYPE",exprType)
         #search ID in symbol table with scopes to find the type

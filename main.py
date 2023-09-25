@@ -78,7 +78,7 @@ def evaluate_expression(input_str):
                             visitor.symbol_table.setSize(unsized, 1)
                         
             visitor.symbol_table.reviewOffsets()
-            visitor.symbol_table.printTable()
+            #visitor.symbol_table.printTable()
         return None
 
 
