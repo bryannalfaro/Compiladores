@@ -236,6 +236,7 @@ class YAPL(ParseTreeVisitor):
                 #self.visitChildren(ctx)
                 return ErrorType
         elif variableType in self.defaultValues:
+            cprint("VARIABLE TYPE: "+str(variableType),"red")
             variableValue = self.defaultValues[variableType]['value']
         else:
             variableValue = None

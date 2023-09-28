@@ -7,14 +7,12 @@ from threeAddress import *
 from quadrupleCode import *
 import sys
 class IntermediateCode(ParseTreeVisitor):
-    def __init__(self):
+    def __init__(self, symbolTable):
         super().__init__()
-        self.symbol_table = SymbolTable()
-        self.function_table = SymbolTable()
-        self.symbol_table.initialize()
-        self.function_table.initialize()
+        self.symbol_table = symbolTable
+        self.function_table = symbolTable
         self.threeCode = ThreeAddressCode()
-        
+        self.temporals = Temporals()
         self.errors_list = []
 
         self.defaultValues = {
@@ -31,34 +29,35 @@ class IntermediateCode(ParseTreeVisitor):
         self.local_offset = 0
      # Visit a parse tree produced by YAPLParser#program.
     def visitProgram(self, ctx:YAPLParser.ProgramContext):
-        print('progrma')
         children = []
         for child in ctx.children:
             children.append(self.visit(child))
-        return children[0]
+        
+        #return all that are not None
+        return [child for child in children if child is not None]
 
 
         
     
     # Visit a parse tree produced by YAPLParser#class_grammar.
     def visitClass_grammar(self, ctx:YAPLParser.Class_grammarContext): 
-        print('im here ')
         classType = ctx.children[1].getText()
-        print('CLASS TYPE', classType)
         self.current_class = classType
         self.global_offset = 0
 
         #create quadruple 
         quadruple_class = Quadruple('identifier', 'class_'+classType, None, None)
-        
-        self.threeCode.add(quadruple_class)
-        b = self.threeCode
-        self.visitChildren(ctx)
-        return b
+        threeCode = ThreeAddressCode()
+        threeCode.add(quadruple_class)
+        #visit the children
+        for child in ctx.children:
+            res = self.visit(child)
+            if res != None:
+                threeCode.add(res.code)
+        return threeCode
 
     # Visit a parse tree produced by YAPLParser#function.
     def visitFunction(self, ctx:YAPLParser.FunctionContext):
-        print('ehere')
         functionName = ctx.children[0].getText()
         self.current_function = functionName
         self.local_offset = self.global_offset
@@ -66,19 +65,31 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#variable.
     def visitVariable(self, ctx:YAPLParser.VariableContext):
-        print('im here variable ')
         variableName = ctx.children[0].getText()
-        variableType = ctx.children[2].getText()
+        threeCode = ThreeAddressCode()
+        if len(ctx.children) > 3:
+            #visit the children
+            childCode = self.visitChildren(ctx)
+            threeCode.add(childCode.code)
+            threeCode.add(Quadruple('=',childCode.address, None, variableName))
+        else:
+            #search default values
+            variableType = ctx.children[2].getText()
+            if variableType in self.defaultValues:
+                variableValue = self.defaultValues[variableType]['value']
+            else:
+                variableValue = None
+            #quadruple
+            quadruple_variable = Quadruple('=', variableValue, None, variableName)
+            threeCode.add(quadruple_variable)
+            
+
         
-        quadruple_variable = Quadruple('identifier', 'variable_'+variableName, None, None)
-        
-        self.threeCode.add(quadruple_variable)
-        return self.visitChildren(ctx)
+        return threeCode
 
 
     # Visit a parse tree produced by YAPLParser#formal.
     def visitFormal(self, ctx:YAPLParser.FormalContext):
-        print('im here ')
         attributeName = ctx.children[0].getText()
         attributeType = ctx.children[2].getText()
         if attributeType in self.defaultValues:
@@ -109,48 +120,18 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#plusminus.
     def visitPlusminus(self, ctx:YAPLParser.PlusminusContext):
-        print('im here ')
-        #cprint("PLUSMINUS"+ctx.children[0].getText(), "blue")
-        #get the type of the left and right side
         results = []
-        for plus_node in ctx.expr():
-            #print("plus node",plus_node.getText())
-            #Se guarda en un array para obtener el texto de los nodos
-            results.append(self.visit(plus_node))
-
+        for times_node in ctx.expr():
+            results.append(self.visit(times_node))
         left = results[0]
         right = results[-1]
+        threeCode = ThreeAddressCode()
+        threeCode.addAddress(self.temporals.getTemporal())
+        threeCode.add(left.code)
+        threeCode.add(right.code)
+        threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, threeCode.address))
 
-        left=  left[0]
-        right = right[0]
-        print('PLUS', left, right)
-        #if the type of the left and right side are not the same, then add an error
-        if left != right:
-            #make implicit casting of bool to int
-            if left == BoolType and right == IntType:
-                return IntType
-            elif left == IntType and right == BoolType:
-                return IntType
-            else:
-                typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
-                self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
-                self.visitChildren(ctx)
-                return ErrorType
-        else:
-            if left == IntType:
-                return IntType
-            elif left == BoolType:
-                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
-                self.visitChildren(ctx)
-                return ErrorType
-            elif left == StringType:
-                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on String String instead of Ints"))
-                self.visitChildren(ctx)
-                return ErrorType
-            else:
-                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic type mismatch"))
-                self.visitChildren(ctx)
-                return ErrorType
+        return threeCode
 
     # Visit a parse tree produced by YAPLParser#negation.
     def visitNegation(self, ctx:YAPLParser.NegationContext):
@@ -232,9 +213,10 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#int.
     def visitInt(self, ctx:YAPLParser.IntContext):
-        print('im here ')
-        return IntType, ctx.getText()
-
+        threeCode  = ThreeAddressCode()
+        threeCode.typeValue = IntType
+        threeCode.addAddress(ctx.getText())
+        return threeCode
 
     # Visit a parse tree produced by YAPLParser#call.
     def visitCall(self, ctx:YAPLParser.CallContext):
@@ -318,49 +300,22 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#timesdiv.
     def visitTimesdiv(self, ctx:YAPLParser.TimesdivContext):
-        print('im here ')
-        #get the type of the left and right side
-        #print('CONTEXT', ctx.getText())
         results = []
         for times_node in ctx.expr():
-            #print("TIMES TEXT",times_node.getText())
             results.append(self.visit(times_node))
         left = results[0]
         right = results[-1]
-        print(left, right)
+        threeCode = ThreeAddressCode()
+        threeCode.addAddress(self.temporals.getTemporal())
+        threeCode.add(left.code)
+        threeCode.add(right.code)
+        threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, threeCode.address))
+
+        return threeCode
          
 
       
-        left=  left[0]
-        right = right[0]
-        #print("TIMES LEFT RIGHT",left,right)
-        #if the type of the left and right side are not the same, then add an error
-        if left != right:
-            #make implicit casting of bool to int
-            if left == BoolType and right == IntType:
-                return IntType
-            elif left == IntType and right == BoolType:
-                return IntType
-            else:
-                typeErrorMsg ="Arithmetic on " + left + " " + right + " instead of Ints"
-                self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
-                self.visitChildren(ctx)
-                return ErrorType
-        else:
-            if left == IntType:
-                return IntType
-            elif left == BoolType:
-                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on Bool Bool instead of Ints"))
-                self.visitChildren(ctx)
-                return ErrorType
-            elif left == StringType:
-                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic on String String instead of Ints"))
-                self.visitChildren(ctx)
-                return ErrorType
-            else:
-                self.errors_list.append(MyErrorVisitor(ctx, "Arithmetic type mismatch"))
-                self.visitChildren(ctx)
-                return ErrorType
+        
 
     # Visit a parse tree produced by YAPLParser#compare.
     def visitCompare(self, ctx:YAPLParser.CompareContext):
@@ -418,11 +373,12 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#paren.
     def visitParen(self, ctx:YAPLParser.ParenContext):
-        print('im here ')
-        self.visit(ctx.children[0])
-        self.visit(ctx.children[2])
+        threeCode = ThreeAddressCode()
+        expr = self.visit(ctx.children[1])
+        threeCode.addAddress(expr.address)
+        threeCode.add(expr.code)
         # Return expr type
-        return self.visit(ctx.children[1])
+        return threeCode
 
 
     # Visit a parse tree produced by YAPLParser#true.
@@ -500,13 +456,9 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#id.
     def visitId(self, ctx:YAPLParser.IdContext):
-        print('im here ')
-        #print("FUNCTION TYPE ID",self.current_function_type,self.current_function)
-        #search for the variable in the symbol table 
-        #print(self.symbol_table.printTable())
+        threeCode = ThreeAddressCode()
         if ctx.getText() == 'self': #si es self
-            return SELF_TYPE
-        #@TODO verificar scope al tenerlo 
+            return threeCode.addAddress('self')
         else:
             #print("IM HERE IN ID ELSE AAAAAA")
             #print(ctx.getText())
@@ -535,7 +487,8 @@ class IntermediateCode(ParseTreeVisitor):
                     self.visitChildren(ctx)
                     return ErrorType
             else:
-                return variable, ctx.getText()
+                threeCode.addAddress(ctx.getText())
+                return  threeCode
 
     
     # Visit a parse tree produced by YAPLParser#if.

@@ -8,7 +8,8 @@ class Quadruple(object):
 
     def __str__(self):
         if self.op == 'identifier':
-
-            return str(self.op) + " " + str(self.arg1)
-        else:
-            return str(self.op) + " " + str(self.arg1) + " " + str(self.arg2) + " " + str(self.result)
+            return str(self.arg1)
+        elif self.op == '=':
+            return str(self.result) + str(self.op) + str(self.arg1)
+        elif self.op == '*' or self.op == '/' or self.op == '+' or self.op == '-':
+            return str(self.result) + " = " + str(self.arg1) + str(self.op) + str(self.arg2)
