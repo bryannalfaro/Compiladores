@@ -4,14 +4,17 @@ from listenerError import MyErrorVisitor
 from termcolor import cprint    
 from SymbolTable import *
 from threeAddress import *
+from quadrupleCode import *
 import sys
-class YAPL(ParseTreeVisitor):
+class IntermediateCode(ParseTreeVisitor):
     def __init__(self):
         super().__init__()
         self.symbol_table = SymbolTable()
         self.function_table = SymbolTable()
         self.symbol_table.initialize()
         self.function_table.initialize()
+        self.threeCode = ThreeAddressCode()
+        
         self.errors_list = []
 
         self.defaultValues = {
@@ -28,243 +31,54 @@ class YAPL(ParseTreeVisitor):
         self.local_offset = 0
      # Visit a parse tree produced by YAPLParser#program.
     def visitProgram(self, ctx:YAPLParser.ProgramContext):
+        print('progrma')
+        children = []
         for child in ctx.children:
-            if isinstance(child, YAPLParser.Class_grammarContext):
-                self.visitDefineClasses(child)
-        self.visitChildren(ctx)
-        #search for the main class and it has to be just one
-        counterMain = self.symbol_table.getNumberOfEntries("Main")
-        existenceMainMethod = self.symbol_table.getMethodExistence("main","global.Main")
-        if counterMain != 1:
-            self.errors_list.append(MyErrorVisitor(ctx, "There must be one Main class"))
-            
-            # cprint("Number of Main classes: " + str(counterMain),"red")
-        #validate existence of main method in scope global.Main
-        if existenceMainMethod == False:
-            self.errors_list.append(MyErrorVisitor(ctx, "Main class must have a main method"))
-            # cprint("Main class must have a main method","red")
+            children.append(self.visit(child))
+        return children[0]
 
-        #Validate no params on main method
-        paramsMainMethod = self.symbol_table.getMethodParams("main","global.Main")
-        if len(paramsMainMethod) != 0:
-            self.errors_list.append(MyErrorVisitor(ctx, "Main method must have no params"))
-            # cprint("Main method must have no params","red")
+
         
-
-    # Visit a parse tree produced by YAPLParser#class_grammar.
-    def visitDefineClasses(self, ctx:YAPLParser.Class_grammarContext): 
-        #cprint("IM HERE DEFINING","red")
-        classType = ctx.children[1].getText()
-        for child in ctx.children:
-            if isinstance(child, YAPLParser.FunctionContext):
-                self.visitDefineFunction(child, classType)
-
-        classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else ObjectType
-        #cprint(classType+classParent,"blue")
-        #print(ctx.children[1].getText())
-        self.symbol_table.add(classType, 'class', None, 0, {'parent': classParent})
-        return
     
     # Visit a parse tree produced by YAPLParser#class_grammar.
     def visitClass_grammar(self, ctx:YAPLParser.Class_grammarContext): 
-        
+        print('im here ')
         classType = ctx.children[1].getText()
+        print('CLASS TYPE', classType)
         self.current_class = classType
         self.global_offset = 0
 
-        classParent = ctx.children[3].getText() if str(ctx.children[2]).lower() == 'inherits' else ObjectType
+        #create quadruple 
+        quadruple_class = Quadruple('identifier', 'class_'+classType, None, None)
         
-        #self.symbol_table.add(classType, 'class', 0, 0, {'parent': classParent})
-        if self.symbol_table.getClassParent(classParent) == classType and classParent != None:
-            # If the parent of the parent is the same as the classType, Inheritance cycle
-            typeErrorMsg = "Inheritance cycle: " + classType + " " + classParent
-            self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
-            self.visitChildren(ctx)
-            return ErrorType
-        if classParent == 'Int' or classParent == 'Bool' or classParent == 'String':
-            typeErrorMsg = 'Type-check: class ' + classType + ' inherits from ' + classParent
-            self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
-            self.visitChildren(ctx)
-            return ErrorType
-
+        self.threeCode.add(quadruple_class)
+        b = self.threeCode
         self.visitChildren(ctx)
-        return
-
-    def visitDefineFunction(self, ctx:YAPLParser.FunctionContext, className):
-        functionName = ctx.children[0].getText()
-        # Attribute count takes 8 (no attributes) from the children length, and then it ignores commas
-        attributeCount = 0 if len(ctx.children) == 8 else int(((len(ctx.children) - 8) / 2) + 0.5)
-        functionType = ctx.children[-4].getText()
-        #Evaluation of SELF_TYPE
-        if functionType == SELF_TYPE:
-            functionType = self.current_class
-
-        self.function_table.add(functionType, 'function', 0, 0, {'name': functionName, 'attributeCount': attributeCount, 'scope': 'global.' + className})
-
-        return
+        return b
 
     # Visit a parse tree produced by YAPLParser#function.
     def visitFunction(self, ctx:YAPLParser.FunctionContext):
+        print('ehere')
         functionName = ctx.children[0].getText()
         self.current_function = functionName
         self.local_offset = self.global_offset
-        # Attribute count takes 8 (no attributes) from the children length, and then it ignores commas
-        attributeCount = 0 if len(ctx.children) == 8 else int(((len(ctx.children) - 8) / 2) + 0.5)
-        functionType = ctx.children[-4].getText()
-        self.current_function_type = functionType
-        #Evaluation of SELF_TYPE
-        if functionType == SELF_TYPE:
-            functionType = self.current_class
-
-        attributes = []
-        for i in range(2, 2 * attributeCount + 1, 2):
-            # Visiting all attributes (Formal)
-            attributes.append(self.visit(ctx.children[i]))
-
-        # Inheritance errors:
-            # class [name] redefines method [method] and changes number of formals
-            # class [name] redefines method [method] and changes return type (from [original] to [new])
-            # class [name] redefines method [method] and changes type of formal [formal]
-        # Non errors:
-            # Changing formal id
-
-        parentClass = self.symbol_table.getClassParent(self.current_class)
-        #cprint("PARENT CLASS: "+str(parentClass),"red")
-        if parentClass != None:
-            parentFunction = self.symbol_table.getFunctionByScope(functionName, 'global.' + parentClass)
-            #cprint("PARENT FUNCTION: "+str(parentFunction),"red")
-            if parentFunction != None:
-                # Check number of formals
-                if attributeCount != parentFunction.data["attributeCount"]:
-                    errorMsg = 'Class ' + self.current_class + ' redefines method ' + functionName + ' and changes number of formals.'
-                    self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
-                    self.visitChildren(ctx)
-                    return ErrorType
-                # Check return type
-                if functionType != parentFunction.category:
-                    errorMsg = 'Class ' + self.current_class + ' redefines method ' + functionName + ' and changes return type (from ' + parentFunction.category + ' to ' + functionType + ')'
-                    self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
-                    self.visitChildren(ctx)
-                    return ErrorType
-                # Check formal types
-                for i in range(attributeCount):
-                    if attributes[i][0]["type"] != parentFunction.data["attributes"][i][0]["type"]:
-                        errorMsg = 'Class ' + self.current_class + ' redefines method ' + functionName + ' and changes type of formal ' + attributes[i][0]["name"]
-                        self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
-                        self.visitChildren(ctx)
-                        return ErrorType
-
-        # Check return type matches
-        exprType = self.visit(ctx.children[-2])
-        #print("EXPR TYPE",exprType, "functionType", functionType)
-        #cprint(str(exprType)+str(functionType),"green")
-        
-        #Evaluation of SELF_TYPE
-        if exprType == SELF_TYPE:
-            exprType = self.current_class
-
-        originalExprType = exprType
-        hasMatch = False
-        if exprType != functionType:
-            while exprType != None:
-                exprType = self.symbol_table.getClassParent(exprType)
-                if exprType == functionType:
-                    hasMatch = True
-            if not hasMatch:
-                #print('FUNC', self.symbol_table.getClassIndex(functionType), functionType)
-                #print('EXPR', self.symbol_table.getClassIndex(originalExprType), originalExprType)
-                if originalExprType != ErrorType and self.symbol_table.getClassIndex(functionType) < self.symbol_table.getClassIndex(originalExprType):
-                    # Return type of function body nor its parents match expected type
-                    errorMsg = 'Type-Check: ' + str(originalExprType) + ' does not conform to ' + functionType + ' in method ' + functionName
-                    self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
-                    self.visitChildren(ctx)
-                    return ErrorType
-                if originalExprType == ObjectType:
-                    # Return type of function body nor its parents match expected type
-                    errorMsg = 'Type-Check: ' + str(originalExprType) + ' does not conform to ' + functionType + ' in method ' + functionName
-                    self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
-                    self.visitChildren(ctx)
-                    return ErrorType
-
-        # Check in symbol table if function exists in scope
-        if self.symbol_table.getFunctionByScope(functionName, 'global.' + self.current_class) != None or self.symbol_table.getFunctionByScope(functionName, 'global.' + "IO") != None:
-            errorMsg = 'Type-Check: class ' + self.current_class + ' redefines method ' + functionName
-            self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
-            self.visitChildren(ctx)
-            return ErrorType
-
-        # Check if formals of function are repeated
-        for i in range(0, len(attributes)):
-            for j in range(i+1, len(attributes)):
-                if attributes[i][0]["name"] == attributes[j][0]["name"]:
-                    errorMsg = 'Type-Check: class ' + self.current_class + ' has method ' + functionName + ' with duplicate formal parameter named ' + attributes[i][0]["name"]
-                    self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
-                    self.visitChildren(ctx)
-                    return ErrorType
-
-        self.current_function = None
-        # #print("Saliendo de function")
-        #Check of type is primitive to add size
-        # if functionType == IntType or functionType == BoolType:
-        #     self.symbol_table.add(functionType, 'function',self.defaultValues[functionType]['size'], self.global_offset, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
-        #     self.global_offset += self.defaultValues[functionType]['size']
-        # elif functionType == StringType:
-        #     #size of ctx.children[-2]
-        #     #print(len(ctx.children[-2].getText()))
-        #     #-1 because of the quotes but the end of string
-        #     size = (self.defaultValues[functionType]['size'] * len(ctx.children[-2].getText()))-1 
-        #     self.symbol_table.add(functionType, 'function', size, self.global_offset, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
-        #     self.global_offset += size
-        # else:
-        self.symbol_table.add(functionType, 'function', None, self.global_offset, {'name': functionName, 'attributeCount': attributeCount, 'attributes': attributes, 'scope': 'global.' + self.current_class})
-        self.global_offset += (self.local_offset - self.global_offset)
-        return
 
 
     # Visit a parse tree produced by YAPLParser#variable.
     def visitVariable(self, ctx:YAPLParser.VariableContext):
+        print('im here variable ')
         variableName = ctx.children[0].getText()
         variableType = ctx.children[2].getText()
-        #evaluate the value to assign default values
-        if len(ctx.children) > 3:
-            variableValue = ctx.children[4].getText()
-            #print('VARIABLE VALUE', variableValue)
-            valueType  = self.visit(ctx.children[4]) #Type of value to assign
-            #check if the types are the same
-            if variableType != valueType:
-                self.errors_list.append(MyErrorVisitor(ctx, "Variable type mismatch"))
-                #self.visitChildren(ctx)
-                return ErrorType
-        elif variableType in self.defaultValues:
-            variableValue = self.defaultValues[variableType]['value']
-        else:
-            variableValue = None
-
-        # Check in symbol table if variable exists in scope
-        if self.symbol_table.getIdByScope(variableName, 'global.' + self.current_class) != None:
-            errorMsg = 'Type-Check: class ' + self.current_class + ' redefines attribute ' + variableName
-            self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
-            self.visitChildren(ctx)
-            return ErrorType
-            
         
-        # check for size 
-        if variableType in self.defaultValues and variableType != StringType:
-            self.symbol_table.add(variableType, 'variable', self.defaultValues[variableType]['size'], self.global_offset, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
-            self.global_offset += self.defaultValues[variableType]['size']
-        elif variableType == StringType:
-            #size of string * length of variable
-            #-1 because of the quotes but the end of string
-            size = (self.defaultValues[variableType]['size'] * len(variableValue))+10
-            self.symbol_table.add(variableType, 'variable', size, self.global_offset, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
-            self.global_offset += size
-        else:
-            self.symbol_table.add(variableType, 'variable', None, 0, {'name': variableName, 'value': variableValue, 'scope': 'global.' + self.current_class})
+        quadruple_variable = Quadruple('identifier', 'variable_'+variableName, None, None)
+        
+        self.threeCode.add(quadruple_variable)
         return self.visitChildren(ctx)
 
 
     # Visit a parse tree produced by YAPLParser#formal.
     def visitFormal(self, ctx:YAPLParser.FormalContext):
+        print('im here ')
         attributeName = ctx.children[0].getText()
         attributeType = ctx.children[2].getText()
         if attributeType in self.defaultValues:
@@ -295,6 +109,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#plusminus.
     def visitPlusminus(self, ctx:YAPLParser.PlusminusContext):
+        print('im here ')
         #cprint("PLUSMINUS"+ctx.children[0].getText(), "blue")
         #get the type of the left and right side
         results = []
@@ -306,6 +121,8 @@ class YAPL(ParseTreeVisitor):
         left = results[0]
         right = results[-1]
 
+        left=  left[0]
+        right = right[0]
         print('PLUS', left, right)
         #if the type of the left and right side are not the same, then add an error
         if left != right:
@@ -337,6 +154,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#negation.
     def visitNegation(self, ctx:YAPLParser.NegationContext):
+        print('im here ')
         self.visit(ctx.children[0])
         result = self.visit(ctx.children[1])
         #check if the type is an integer
@@ -356,6 +174,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#curly.
     def visitCurly(self, ctx:YAPLParser.CurlyContext):
+        print('im here ')
         # Visit all children, but return type of last <expr>
         for index, child in enumerate(ctx.children):
             if index != len(ctx.children) - 3:
@@ -374,11 +193,13 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#string.
     def visitString(self, ctx:YAPLParser.StringContext):
+        print('im here ')
         return StringType
 
 
     # Visit a parse tree produced by YAPLParser#isvoid.
     def visitIsvoid(self, ctx:YAPLParser.IsvoidContext):
+        print('im here ')
         self.visitChildren(ctx)
         # Return bool evaluates to true if expr is void 
         # and evaluates to false if expr is not void.
@@ -387,12 +208,14 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#false.
     def visitFalse(self, ctx:YAPLParser.FalseContext):
+        print('im here ')
         return BoolType
 
 
     # Visit a parse tree produced by YAPLParser#while.
     #@TODO check only type or change the value of 0 to false
     def visitWhile(self, ctx:YAPLParser.WhileContext):
+        print('im here ')
         compareExpression = self.visit(ctx.children[1])
         if compareExpression == BoolType:
             self.visit(ctx.children[3])
@@ -409,11 +232,13 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#int.
     def visitInt(self, ctx:YAPLParser.IntContext):
-        return IntType
+        print('im here ')
+        return IntType, ctx.getText()
 
 
     # Visit a parse tree produced by YAPLParser#call.
     def visitCall(self, ctx:YAPLParser.CallContext):
+        print('im here ')
         #print("CALL")
         self.visitChildren(ctx)
         # Return ID type
@@ -485,6 +310,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#newtype.
     def visitNewtype(self, ctx:YAPLParser.NewtypeContext):
+        print('im here ')
         self.visit(ctx.children[0])
         # Return Type
         return ctx.children[1].getText() if ctx.children[1].getText() != SELF_TYPE else self.current_class
@@ -492,6 +318,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#timesdiv.
     def visitTimesdiv(self, ctx:YAPLParser.TimesdivContext):
+        print('im here ')
         #get the type of the left and right side
         #print('CONTEXT', ctx.getText())
         results = []
@@ -500,7 +327,12 @@ class YAPL(ParseTreeVisitor):
             results.append(self.visit(times_node))
         left = results[0]
         right = results[-1]
-        
+        print(left, right)
+         
+
+      
+        left=  left[0]
+        right = right[0]
         #print("TIMES LEFT RIGHT",left,right)
         #if the type of the left and right side are not the same, then add an error
         if left != right:
@@ -532,11 +364,13 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#compare.
     def visitCompare(self, ctx:YAPLParser.CompareContext):
+        print('im here ')
         results = []
         for compare_node in ctx.expr():
             results.append(self.visit(compare_node))
-        left = results[0]
-        right = results[-1]
+        left = results[0][0]
+        right = results[-1][0]
+        print("COMPARE LEFT RIGHT",left,right)
         #if the type of the left and right side are not the same, then add an error
 
         if left != right:
@@ -566,6 +400,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#not.
     def visitNot(self, ctx:YAPLParser.NotContext):
+        print('im here ')
         #get the type of the left and right side
         result = self.visit(ctx.expr())
         #if they are integers, then return an error
@@ -583,6 +418,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#paren.
     def visitParen(self, ctx:YAPLParser.ParenContext):
+        print('im here ')
         self.visit(ctx.children[0])
         self.visit(ctx.children[2])
         # Return expr type
@@ -664,6 +500,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#id.
     def visitId(self, ctx:YAPLParser.IdContext):
+        print('im here ')
         #print("FUNCTION TYPE ID",self.current_function_type,self.current_function)
         #search for the variable in the symbol table 
         #print(self.symbol_table.printTable())
@@ -698,12 +535,13 @@ class YAPL(ParseTreeVisitor):
                     self.visitChildren(ctx)
                     return ErrorType
             else:
-                return variable
+                return variable, ctx.getText()
 
     
     # Visit a parse tree produced by YAPLParser#if.
     #@TODO check and return the if type or not, for casting.
     def visitIf(self, ctx:YAPLParser.IfContext):
+        print('im here ')
         #print("COMPARE TYPE", self.visit(ctx.children[1]))
         compareExpression = self.visit(ctx.children[1])
         thenType = self.visit(ctx.children[3])
@@ -750,6 +588,8 @@ class YAPL(ParseTreeVisitor):
     #@TODO error expr not complete
     # Visit a parse tree produced by YAPLParser#assign.
     def visitAssign(self, ctx:YAPLParser.AssignContext):
+
+        print('im here ')
         #print the text of all children
         #print("FULL TEXT",ctx.getText(),ctx.children[2])
         #for to iterate children 2
@@ -763,6 +603,7 @@ class YAPL(ParseTreeVisitor):
         
         #get type of the expression
         exprType = self.visit(ctx.children[2])
+        exprType = exprType[0]
 
         #print("EXPRTYPE",exprType)
         #search ID in symbol table with scopes to find the type
@@ -821,6 +662,7 @@ class YAPL(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#bigexpr.
     def visitBigexpr(self, ctx:YAPLParser.BigexprContext):
+        print('im here ')
         # Return ID type
         callerType = self.visit(ctx.children[0])
         for i in range(1, len(ctx.children)):

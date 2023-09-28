@@ -3,6 +3,7 @@ from ANTLR.YAPLLexer import YAPLLexer
 from ANTLR.YAPLParser import YAPLParser
 from ANTLR.YAPLVisitor import YAPLVisitor
 from VisitorImpl import YAPL
+from visitor3add import IntermediateCode
 import os
 from antlr4.tree.Trees import Trees
 from listenerError import MyErrorListener
@@ -46,10 +47,10 @@ def evaluate_expression(input_str):
         return None
     else:
         #command to show tree
-        #   command = f"antlr4-parse YAPL.g4 program -gui"
-        #   process = os.popen(command, 'w')
-        #   process.write(input_string)
-        #   process.close()
+        # command = f"antlr4-parse YAPL.g4 program -gui"
+        # process = os.popen(command, 'w')
+        # process.write(input_string)
+        # process.close()
         visitor.visit(tree)
         #see errors
         if len(visitor.errors_list) > 0:
@@ -57,6 +58,10 @@ def evaluate_expression(input_str):
             for error in visitor.errors_list:
                 print(error)
             visitor.symbol_table.printTable()
+             #intermediate code
+            intermediate = IntermediateCode()
+            code  = intermediate.visit(tree)
+            print(code)
         else:
             cprint("No type errors found","green")
             #print the symbol table
@@ -78,7 +83,11 @@ def evaluate_expression(input_str):
                             visitor.symbol_table.setSize(unsized, 1)
                         
             visitor.symbol_table.reviewOffsets()
-            #visitor.symbol_table.printTable()
+            visitor.symbol_table.printTable()
+            #intermediate code
+            intermediate = IntermediateCode()
+            code  = intermediate.visit(tree)
+            print(code)
         return None
 
 
