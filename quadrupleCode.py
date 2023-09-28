@@ -13,3 +13,7 @@ class Quadruple(object):
             return str(self.result) + str(self.op) + str(self.arg1)
         elif self.op == '*' or self.op == '/' or self.op == '+' or self.op == '-':
             return str(self.result) + " = " + str(self.arg1) + str(self.op) + str(self.arg2)
+        elif self.op == 'not':
+            return str(self.result) + " = " + str(self.op)+  " " + str(self.arg1)
+        elif self.op == 'negation':
+            return str(self.result) + " = " + str(self.op)+  " " + str(self.arg1)

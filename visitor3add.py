@@ -5,7 +5,7 @@ from termcolor import cprint
 from SymbolTable import *
 from threeAddress import *
 from quadrupleCode import *
-import sys
+
 class IntermediateCode(ParseTreeVisitor):
     def __init__(self, symbolTable):
         super().__init__()
@@ -27,6 +27,7 @@ class IntermediateCode(ParseTreeVisitor):
         self.current_function_type = None
         self.global_offset = 0
         self.local_offset = 0
+
      # Visit a parse tree produced by YAPLParser#program.
     def visitProgram(self, ctx:YAPLParser.ProgramContext):
         children = []
@@ -35,9 +36,6 @@ class IntermediateCode(ParseTreeVisitor):
         
         #return all that are not None
         return [child for child in children if child is not None]
-
-
-        
     
     # Visit a parse tree produced by YAPLParser#class_grammar.
     def visitClass_grammar(self, ctx:YAPLParser.Class_grammarContext): 
@@ -59,8 +57,17 @@ class IntermediateCode(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#function.
     def visitFunction(self, ctx:YAPLParser.FunctionContext):
         functionName = ctx.children[0].getText()
+        threeCode = ThreeAddressCode()
+
         self.current_function = functionName
+
         self.local_offset = self.global_offset
+        # print("FUNCTION NAME",functionName)
+        # funct_expr = self.visit(ctx.children[4])
+        # print("FUNCT EXPR",funct_expr)
+        # threeCode.add(Quadruple('identifier', 'function_'+functionName+self.current_class, None, None))
+        # threeCode.add(funct_expr.code)
+        #threeCode.add(Quadruple('return', funct_expr.address, None, None))
 
 
     # Visit a parse tree produced by YAPLParser#variable.
@@ -82,8 +89,6 @@ class IntermediateCode(ParseTreeVisitor):
             #quadruple
             quadruple_variable = Quadruple('=', variableValue, None, variableName)
             threeCode.add(quadruple_variable)
-            
-
         
         return threeCode
 
@@ -135,24 +140,14 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#negation.
     def visitNegation(self, ctx:YAPLParser.NegationContext):
-        print('im here ')
-        self.visit(ctx.children[0])
-        result = self.visit(ctx.children[1])
-        #check if the type is an integer
-        if result == IntType:
-            return IntType
-        elif result == BoolType:
-            return BoolType
-        elif result == StringType:
-            self.errors_list.append(MyErrorVisitor(ctx, "Negate applied to String instead of Int"))
-            self.visitChildren(ctx)
-            return ErrorType
-        else:
-            self.errors_list.append(MyErrorVisitor(ctx, "Negate applied to invalid type"))
-            self.visitChildren(ctx)
-            return ErrorType
-
-
+        result = self.visit(ctx.expr())
+        threeCode = ThreeAddressCode()
+        threeCode.addAddress(self.temporals.getTemporal())
+        threeCode.add(result.code)
+        
+        threeCode.add(Quadruple('negation', result.address, None, threeCode.address))
+        return threeCode
+        
     # Visit a parse tree produced by YAPLParser#curly.
     def visitCurly(self, ctx:YAPLParser.CurlyContext):
         print('im here ')
@@ -174,9 +169,10 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#string.
     def visitString(self, ctx:YAPLParser.StringContext):
-        print('im here ')
-        return StringType
-
+        threeCode  = ThreeAddressCode()
+        threeCode.typeValue = StringType
+        threeCode.addAddress(ctx.getText())
+        return threeCode
 
     # Visit a parse tree produced by YAPLParser#isvoid.
     def visitIsvoid(self, ctx:YAPLParser.IsvoidContext):
@@ -189,12 +185,13 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#false.
     def visitFalse(self, ctx:YAPLParser.FalseContext):
-        print('im here ')
-        return BoolType
+        threeCode  = ThreeAddressCode()
+        threeCode.typeValue = BoolType
+        threeCode.addAddress(ctx.getText())
+        return threeCode
 
 
     # Visit a parse tree produced by YAPLParser#while.
-    #@TODO check only type or change the value of 0 to false
     def visitWhile(self, ctx:YAPLParser.WhileContext):
         print('im here ')
         compareExpression = self.visit(ctx.children[1])
@@ -313,10 +310,6 @@ class IntermediateCode(ParseTreeVisitor):
 
         return threeCode
          
-
-      
-        
-
     # Visit a parse tree produced by YAPLParser#compare.
     def visitCompare(self, ctx:YAPLParser.CompareContext):
         print('im here ')
@@ -352,23 +345,15 @@ class IntermediateCode(ParseTreeVisitor):
                 return ErrorType
            
 
-
     # Visit a parse tree produced by YAPLParser#not.
     def visitNot(self, ctx:YAPLParser.NotContext):
-        print('im here ')
-        #get the type of the left and right side
         result = self.visit(ctx.expr())
-        #if they are integers, then return an error
-        if result == IntType:
-            self.errors_list.append(MyErrorVisitor(ctx, "Not applied to Int instead of Bool"))
-            self.visitChildren(ctx)
-            return ErrorType
-        elif result == StringType:
-            self.errors_list.append(MyErrorVisitor(ctx, "Not applied to String instead of Bool"))
-            self.visitChildren(ctx)
-            return ErrorType
-        else:
-            return BoolType
+        threeCode = ThreeAddressCode()
+        threeCode.addAddress(self.temporals.getTemporal())
+        threeCode.add(result.code)
+
+        threeCode.add(Quadruple('not', result.address, None, threeCode.address))
+        return threeCode
 
 
     # Visit a parse tree produced by YAPLParser#paren.
@@ -377,13 +362,16 @@ class IntermediateCode(ParseTreeVisitor):
         expr = self.visit(ctx.children[1])
         threeCode.addAddress(expr.address)
         threeCode.add(expr.code)
-        # Return expr type
+
         return threeCode
 
 
     # Visit a parse tree produced by YAPLParser#true.
     def visitTrue(self, ctx:YAPLParser.TrueContext):
-        return BoolType
+        threeCode  = ThreeAddressCode()
+        threeCode.typeValue = BoolType
+        threeCode.addAddress(ctx.getText())
+        return threeCode
 
 
     # Visit a parse tree produced by YAPLParser#let.
