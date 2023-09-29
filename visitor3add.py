@@ -12,8 +12,11 @@ class IntermediateCode(ParseTreeVisitor):
         self.symbol_table = symbolTable
         self.function_table = symbolTable
         self.threeCode = ThreeAddressCode()
-        self.temporals = Temporals()
+        self.temporals = Generator()
         self.errors_list = []
+        self.fatherTrueLabel = False
+        self.fatherFalseLabel = False
+        self.nextFatherLabel = False
 
         self.defaultValues = {
             IntType: { 'value': 0, 'size': 4 },
@@ -52,22 +55,46 @@ class IntermediateCode(ParseTreeVisitor):
             res = self.visit(child)
             if res != None:
                 threeCode.add(res.code)
+
+        #Esto es cuando hay una expresion como if o while que usa siguiente
+        
         return threeCode
 
     # Visit a parse tree produced by YAPLParser#function.
     def visitFunction(self, ctx:YAPLParser.FunctionContext):
+        functionName = ctx.children[0].getText()
+        self.current_function = functionName
+        self.local_offset = self.global_offset
+        # Attribute count takes 8 (no attributes) from the children length, and then it ignores commas
+        attributeCount = 0 if len(ctx.children) == 8 else int(((len(ctx.children) - 8) / 2) + 0.5)
+        functionType = ctx.children[-4].getText()
+        self.current_function_type = functionType
+
+        if attributeCount > 0:
+            attributes = []
+            for i in range(2, 2 * attributeCount + 1, 2):
+                # Visiting all attributes (Formal)
+                attributes.append(self.visit(ctx.children[i]))
+
+
+        # Check return type matches
+        exprType = self.visit(ctx.children[-2])
+        
         functionName = ctx.children[0].getText()
         threeCode = ThreeAddressCode()
 
         self.current_function = functionName
 
         self.local_offset = self.global_offset
-        # print("FUNCTION NAME",functionName)
-        # funct_expr = self.visit(ctx.children[4])
-        # print("FUNCT EXPR",funct_expr)
-        # threeCode.add(Quadruple('identifier', 'function_'+functionName+self.current_class, None, None))
-        # threeCode.add(funct_expr.code)
-        #threeCode.add(Quadruple('return', funct_expr.address, None, None))
+        
+        funct_expr = self.visit(ctx.children[-2])
+        threeCode.add(Quadruple('identifier', 'function_'+functionName+"_"+self.current_class+f"[{functionType}]", None, None))
+        threeCode.add(funct_expr.code)
+        if self.nextFatherLabel != False:
+            threeCode.add(Quadruple('label', None, None, self.nextFatherLabel))
+            self.nextFatherLabel = False
+        threeCode.add(Quadruple('return', 'function_'+functionName+"_"+self.current_class+f"[{functionType}]", None, None))
+        return threeCode
 
 
     # Visit a parse tree produced by YAPLParser#variable.
@@ -78,7 +105,7 @@ class IntermediateCode(ParseTreeVisitor):
             #visit the children
             childCode = self.visitChildren(ctx)
             threeCode.add(childCode.code)
-            threeCode.add(Quadruple('=',childCode.address, None, variableName))
+            threeCode.add(Quadruple('equal',childCode.address, None, variableName))
         else:
             #search default values
             variableType = ctx.children[2].getText()
@@ -195,17 +222,9 @@ class IntermediateCode(ParseTreeVisitor):
     def visitWhile(self, ctx:YAPLParser.WhileContext):
         print('im here ')
         compareExpression = self.visit(ctx.children[1])
-        if compareExpression == BoolType:
-            self.visit(ctx.children[3])
-            return ObjectType
-        elif compareExpression == IntType:
-            #make casting int to bool
-            self.visit(ctx.children[3])
-            return ObjectType
-        else:
-                self.errors_list.append(MyErrorVisitor(ctx, "Predicate has type " + compareExpression + " instead of BOOL"))
-                self.visitChildren(ctx)
-                return ErrorType
+        whileType = self.visit(ctx.children[3])
+
+
 
 
     # Visit a parse tree produced by YAPLParser#int.
@@ -312,37 +331,18 @@ class IntermediateCode(ParseTreeVisitor):
          
     # Visit a parse tree produced by YAPLParser#compare.
     def visitCompare(self, ctx:YAPLParser.CompareContext):
-        print('im here ')
         results = []
         for compare_node in ctx.expr():
             results.append(self.visit(compare_node))
-        left = results[0][0]
-        right = results[-1][0]
-        print("COMPARE LEFT RIGHT",left,right)
-        #if the type of the left and right side are not the same, then add an error
+        left = results[0]
+        right = results[-1]
 
-        if left != right:
-            #make implicit casting of bool to int
-            if left == BoolType and right == IntType:
-                return BoolType
-            elif left == IntType and right == BoolType:
-                return BoolType
-            else:
-                typeErrorMsg ="Comparison between " + left + " and " + right
-                self.errors_list.append(MyErrorVisitor(ctx, typeErrorMsg))
-                self.visitChildren(ctx)
-                return ErrorType
-        else:
-            if left == IntType:
-                return BoolType
-            elif left == BoolType:
-                return BoolType
-            elif left == StringType:
-                return BoolType
-            else:
-                self.errors_list.append(MyErrorVisitor(ctx, "Compare type mismatch"))
-                self.visitChildren(ctx)
-                return ErrorType
+        threeCode = ThreeAddressCode()
+        threeCode.add(left.code)
+        threeCode.add(right.code)
+        threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, self.fatherTrueLabel))
+        threeCode.add(Quadruple('goto', None, None, self.fatherFalseLabel))
+        return threeCode
            
 
     # Visit a parse tree produced by YAPLParser#not.
@@ -480,126 +480,35 @@ class IntermediateCode(ParseTreeVisitor):
 
     
     # Visit a parse tree produced by YAPLParser#if.
-    #@TODO check and return the if type or not, for casting.
     def visitIf(self, ctx:YAPLParser.IfContext):
-        print('im here ')
-        #print("COMPARE TYPE", self.visit(ctx.children[1]))
+        self.fatherTrueLabel, self.fatherFalseLabel = self.temporals.getIfLabel()
+        self.nextFatherLabel = self.temporals.getNextLabel()
+        
         compareExpression = self.visit(ctx.children[1])
         thenType = self.visit(ctx.children[3])
-        #print("THEN TYPE",thenType)
         elseType = self.visit(ctx.children[5])
-        #print("else",elseType)
 
-        # Defining ifType. Highest common class
-        if thenType == elseType:
-            if compareExpression == BoolType or compareExpression == IntType:
-                #print("IN THE IF")
-                return thenType
-        else:
-            #print("IN THE ELSE")
-            # Cycle through class parents
-            #print("HERE")
-            thenTempType = thenType
-            elseTempType = elseType
-            while thenTempType != None:
-                while elseTempType != None:
-                    elseTempType = self.symbol_table.getClassParent(elseTempType)
-                    #print("ELSE TEMP TYPE",elseTempType, "THEN TEMP TYPE",thenTempType)
-                    if elseTempType == thenTempType:
-                        #print("Compare expression",compareExpression == BoolType)
-                        if compareExpression == BoolType or compareExpression == IntType:
-                            #print("THEN TEMP TYPE",thenTempType)   
-                            return thenTempType
-                elseTempType = elseType
-                if thenTempType == SELF_TYPE and self.function_table.getClassParent(thenTempType) == None:
-                    if compareExpression == BoolType or compareExpression == IntType:
-                        thenTempType = self.function_table.getCategory(self.current_function)
-                        return thenTempType
-                else:
-                    if compareExpression == BoolType or compareExpression == IntType:
-                        #print("ELSE THEN TEMP TYPE",thenTempType)
-                        thenTempType = self.symbol_table.getClassParent(thenTempType)
-                        return thenTempType
+        threeCode = ThreeAddressCode()
+        threeCode.add(compareExpression.code)
+        threeCode.add(Quadruple('label', None, None, self.fatherTrueLabel))
+        threeCode.add(thenType.code)
+        threeCode.add(Quadruple('goto', None, None, self.nextFatherLabel))
+        threeCode.add(Quadruple('label', None, None, self.fatherFalseLabel))
+        threeCode.add(elseType.code)
 
-            
-        self.errors_list.append(MyErrorVisitor(ctx, "Conditional has type " + compareExpression + " instead of BOOL"))
-        self.visitChildren(ctx)
-        return ErrorType
+        return threeCode
 
-    #@TODO error expr not complete
     # Visit a parse tree produced by YAPLParser#assign.
     def visitAssign(self, ctx:YAPLParser.AssignContext):
 
-        print('im here ')
-        #print the text of all children
-        #print("FULL TEXT",ctx.getText(),ctx.children[2])
-        #for to iterate children 2
-        #get id of the assignment
         idValue = ctx.children[0].getText()
-        #get the expression of the assignment
-        exprValue = ctx.children[2].getText()
-        #print("HAHA",ctx.expr())
-
-        #print("ASSIGN: "+idValue+" EXPR> "+exprValue)
-        
-        #get type of the expression
         exprType = self.visit(ctx.children[2])
-        exprType = exprType[0]
 
-        #print("EXPRTYPE",exprType)
-        #search ID in symbol table with scopes to find the type
-        classScope = 'global.' + str(self.current_class)
-        functionScope = 'global.' + str(self.current_class) + '.' + str(self.current_function)
-        letScope = 'local.' + str(self.current_class) + '.' + str(self.current_function) + '.let' + str(self.current_let-1)
-        paramScope = 'local.' + str(self.current_class) + '.' + str(self.current_function)
-        #print("ASSIGN SCOPE",letScope,idValue)
-        idType = self.symbol_table.getVariableCategory(idValue, letScope)
-        
-        if idType == None:
-            idType = self.symbol_table.getVariableCategory(idValue, paramScope)
-            if idType == None:
-                idType = self.symbol_table.getVariableCategory(idValue, functionScope)
-                if idType == None:
-                    idType = self.symbol_table.getVariableCategory(idValue, classScope)
-                    if idType == None:
-                        self.errors_list.append(MyErrorVisitor(ctx, "Variable " + idValue + " not declared"))
-                        self.visitChildren(ctx)
-                        return ErrorType
-            
-            #cprint("ID TYPE: "+idType,"red")
+        threeCode = ThreeAddressCode()
+        threeCode.add(exprType.code)
+        threeCode.add(Quadruple('equal', exprType.address, None, idValue))
 
-        #search type of expr if type it is not primitive or function call
-        hasMatch = False
-        if exprType != idType:
-            while exprType != None:
-                #cprint("EXPR TYPE busqueda: "+exprType,"yellow")
-                exprType = self.symbol_table.getClassParent(exprType)
-                if exprType == idType:
-                    hasMatch = True
-                    break
-            if not hasMatch:
-                # Return type of function body nor its parents match expected type
-                errorMsg = 'Type-Check: ' + str(exprType) + ' does not conform to ' + idType + ' in variable ' + idValue
-                self.errors_list.append(MyErrorVisitor(ctx, errorMsg))
-                #@TODO este se vuelve a visitar
-                #self.visitChildren(ctx)
-                return ErrorType
-            
-        # cprint("TYPES MATCH "+idType+exprType,"blue")
-
-
-        #assing in symbol table value
-        if self.symbol_table.setVariableValue(idValue, exprValue, letScope ):
-            return exprType
-        if self.symbol_table.setVariableValue(idValue, exprValue, paramScope):
-            return exprType
-        if self.symbol_table.setVariableValue(idValue, exprValue, functionScope):
-            return exprType
-        if self.symbol_table.setVariableValue(idValue, exprValue, classScope):
-            return exprType
-        # cprint("ASSIGN: "+"ID:"+idValue+" EXPR> "+exprValue,"green")
-        return exprType
-
+        return threeCode
 
     # Visit a parse tree produced by YAPLParser#bigexpr.
     def visitBigexpr(self, ctx:YAPLParser.BigexprContext):

@@ -30,14 +30,35 @@ class ThreeAddressCode():
         
         return string
     
-class Temporals():
+class Generator():
     def __init__(self):
-        self.tempCounters = -1
+        self.tempCounters = 0
+        self.counterIf = 0
+        self.counterNext=0
+        self.counterBegin = 0
     
     
     def getTemporal(self):
+        temporal  = "t" + str(self.tempCounters)
         self.tempCounters += 1
-        return "t" + str(self.tempCounters)
+
+        return temporal
+    
+    def getIfLabel(self):
+        trueLabel , falseLabel = "true" + str(self.counterIf), "false" + str(self.counterIf)
+        self.counterIf += 1
+        return trueLabel, falseLabel
+    
+    def getNextLabel(self):
+        nextLabel = "next" + str(self.counterNext)
+        self.counterNext += 1
+        return nextLabel    
+    
+    def getBeginLabel(self):
+        beginLabel = "begin" + str(self.counterBegin)
+        self.counterBegin += 1
+        return beginLabel
+    
     
     def __str__(self):
         string = ""

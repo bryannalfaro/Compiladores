@@ -705,7 +705,7 @@ class YAPL(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#if.
     #@TODO check and return the if type or not, for casting.
     def visitIf(self, ctx:YAPLParser.IfContext):
-        #print("COMPARE TYPE", self.visit(ctx.children[1]))
+        print("COMPARE TYPE", self.visit(ctx.children[1]))
         compareExpression = self.visit(ctx.children[1])
         thenType = self.visit(ctx.children[3])
         #print("THEN TYPE",thenType)
