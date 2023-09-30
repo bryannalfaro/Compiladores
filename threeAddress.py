@@ -36,6 +36,7 @@ class Generator():
         self.counterIf = 0
         self.counterNext=0
         self.counterBegin = 0
+        self.counterWhile = 0
     
     
     def getTemporal(self):
@@ -44,9 +45,36 @@ class Generator():
 
         return temporal
     
-    def getIfLabel(self):
-        trueLabel , falseLabel = "true" + str(self.counterIf), "false" + str(self.counterIf)
-        self.counterIf += 1
+    def getIfLabel(self, amount, label=None):
+        if amount == 1:
+            trueLabel , falseLabel = "true" + str(self.counterIf), "false" + str(self.counterIf)
+            self.counterIf += 1
+        else:
+            if label == 'true':
+                trueLabel  = "true" + str(self.counterIf)
+                self.counterIf += 1
+                return trueLabel
+            else:
+                falseLabel  = "false" + str(self.counterIf)
+                self.counterIf += 1
+                return falseLabel
+
+        return trueLabel, falseLabel
+    
+    def getWhileLabel(self,amount, label=None):
+        if amount == 1:
+            trueLabel , falseLabel = "trueWhile" + str(self.counterWhile), "falseWhile" + str(self.counterWhile)
+            self.counterWhile += 1
+        else:
+            if label == 'true':
+                trueLabel  = "trueWhile" + str(self.counterWhile)
+                self.counterWhile += 1
+                return trueLabel
+            else:
+                falseLabel  = "false" + str(self.counterWhile)
+                self.counterWhile += 1
+                return falseLabel
+
         return trueLabel, falseLabel
     
     def getNextLabel(self):

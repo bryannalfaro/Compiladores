@@ -3,8 +3,11 @@ class Main{
   b: Int <- 4+5*a;
   c: Bool <- not true;
 
-   perro(): Int{
-    if 5=3 then a<-4 else b<-4 fi
+   main(): Object{
+    while 5<4
+      loop
+      a<-4
+      pool
   };
 
 

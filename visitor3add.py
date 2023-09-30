@@ -5,6 +5,7 @@ from termcolor import cprint
 from SymbolTable import *
 from threeAddress import *
 from quadrupleCode import *
+import copy
 
 class IntermediateCode(ParseTreeVisitor):
     def __init__(self, symbolTable):
@@ -12,11 +13,12 @@ class IntermediateCode(ParseTreeVisitor):
         self.symbol_table = symbolTable
         self.function_table = symbolTable
         self.threeCode = ThreeAddressCode()
-        self.temporals = Generator()
+        self.generate = Generator()
         self.errors_list = []
         self.fatherTrueLabel = False
         self.fatherFalseLabel = False
         self.nextFatherLabel = False
+        self.beginLabel = False
 
         self.defaultValues = {
             IntType: { 'value': 0, 'size': 4 },
@@ -55,9 +57,6 @@ class IntermediateCode(ParseTreeVisitor):
             res = self.visit(child)
             if res != None:
                 threeCode.add(res.code)
-
-        #Esto es cuando hay una expresion como if o while que usa siguiente
-        
         return threeCode
 
     # Visit a parse tree produced by YAPLParser#function.
@@ -70,16 +69,15 @@ class IntermediateCode(ParseTreeVisitor):
         functionType = ctx.children[-4].getText()
         self.current_function_type = functionType
 
-        if attributeCount > 0:
+        #@TODO add logic when parameters in 3 add code
+        if attributeCount > 0: 
             attributes = []
             for i in range(2, 2 * attributeCount + 1, 2):
                 # Visiting all attributes (Formal)
                 attributes.append(self.visit(ctx.children[i]))
 
 
-        # Check return type matches
-        exprType = self.visit(ctx.children[-2])
-        
+    
         functionName = ctx.children[0].getText()
         threeCode = ThreeAddressCode()
 
@@ -87,9 +85,12 @@ class IntermediateCode(ParseTreeVisitor):
 
         self.local_offset = self.global_offset
         
+        #Create the quadruple
         funct_expr = self.visit(ctx.children[-2])
         threeCode.add(Quadruple('identifier', 'function_'+functionName+"_"+self.current_class+f"[{functionType}]", None, None))
-        threeCode.add(funct_expr.code)
+        threeCode.add(funct_expr.code) #añadir el codigo de la expresion
+        
+        #Si hay una label definida
         if self.nextFatherLabel != False:
             threeCode.add(Quadruple('label', None, None, self.nextFatherLabel))
             self.nextFatherLabel = False
@@ -114,7 +115,7 @@ class IntermediateCode(ParseTreeVisitor):
             else:
                 variableValue = None
             #quadruple
-            quadruple_variable = Quadruple('=', variableValue, None, variableName)
+            quadruple_variable = Quadruple('equal', variableValue, None, variableName)
             threeCode.add(quadruple_variable)
         
         return threeCode
@@ -158,7 +159,7 @@ class IntermediateCode(ParseTreeVisitor):
         left = results[0]
         right = results[-1]
         threeCode = ThreeAddressCode()
-        threeCode.addAddress(self.temporals.getTemporal())
+        threeCode.addAddress(self.generate.getTemporal())
         threeCode.add(left.code)
         threeCode.add(right.code)
         threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, threeCode.address))
@@ -169,7 +170,7 @@ class IntermediateCode(ParseTreeVisitor):
     def visitNegation(self, ctx:YAPLParser.NegationContext):
         result = self.visit(ctx.expr())
         threeCode = ThreeAddressCode()
-        threeCode.addAddress(self.temporals.getTemporal())
+        threeCode.addAddress(self.generate.getTemporal())
         threeCode.add(result.code)
         
         threeCode.add(Quadruple('negation', result.address, None, threeCode.address))
@@ -220,11 +221,27 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#while.
     def visitWhile(self, ctx:YAPLParser.WhileContext):
-        print('im here ')
+
+        self.nextFatherLabel = self.generate.getNextLabel()
+        self.fatherFalseLabel = copy.deepcopy(self.nextFatherLabel) #hago copia B.false = S.siguiente
+        self.fatherTrueLabel = self.generate.getWhileLabel(0, 'true') 
         compareExpression = self.visit(ctx.children[1])
         whileType = self.visit(ctx.children[3])
+        
+        
+        self.nextFatherLabel = self.beginLabel #cambio nextFather S1.siguiente = inicio
 
 
+        threeCode = ThreeAddressCode()
+        self.beginLabel  = self.generate.getBeginLabel()
+        threeCode.add(Quadruple('label', None, None, self.beginLabel))
+        threeCode.add(compareExpression.code)
+        threeCode.add(Quadruple('label', None, None, self.fatherTrueLabel))
+        threeCode.add(whileType.code)
+        threeCode.add(Quadruple('goto', None, None, self.beginLabel))
+        threeCode.add(Quadruple('label', None, None, self.fatherFalseLabel))
+
+        return threeCode
 
 
     # Visit a parse tree produced by YAPLParser#int.
@@ -308,7 +325,6 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#newtype.
     def visitNewtype(self, ctx:YAPLParser.NewtypeContext):
-        print('im here ')
         self.visit(ctx.children[0])
         # Return Type
         return ctx.children[1].getText() if ctx.children[1].getText() != SELF_TYPE else self.current_class
@@ -322,7 +338,7 @@ class IntermediateCode(ParseTreeVisitor):
         left = results[0]
         right = results[-1]
         threeCode = ThreeAddressCode()
-        threeCode.addAddress(self.temporals.getTemporal())
+        threeCode.addAddress(self.generate.getTemporal())
         threeCode.add(left.code)
         threeCode.add(right.code)
         threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, threeCode.address))
@@ -349,7 +365,7 @@ class IntermediateCode(ParseTreeVisitor):
     def visitNot(self, ctx:YAPLParser.NotContext):
         result = self.visit(ctx.expr())
         threeCode = ThreeAddressCode()
-        threeCode.addAddress(self.temporals.getTemporal())
+        threeCode.addAddress(self.generate.getTemporal())
         threeCode.add(result.code)
 
         threeCode.add(Quadruple('not', result.address, None, threeCode.address))
@@ -448,8 +464,7 @@ class IntermediateCode(ParseTreeVisitor):
         if ctx.getText() == 'self': #si es self
             return threeCode.addAddress('self')
         else:
-            #print("IM HERE IN ID ELSE AAAAAA")
-            #print(ctx.getText())
+            #@TODO agregar el caso en 3add code cuando entre aca
             classScope = 'global.' + str(self.current_class)
             functionScope = 'global.' + str(self.current_class) + '.' + str(self.current_function)
             letScope = 'local.' + str(self.current_class) + '.' + str(self.current_function) + '.let' + str(self.current_let-1)
@@ -481,8 +496,8 @@ class IntermediateCode(ParseTreeVisitor):
     
     # Visit a parse tree produced by YAPLParser#if.
     def visitIf(self, ctx:YAPLParser.IfContext):
-        self.fatherTrueLabel, self.fatherFalseLabel = self.temporals.getIfLabel()
-        self.nextFatherLabel = self.temporals.getNextLabel()
+        self.fatherTrueLabel, self.fatherFalseLabel = self.generate.getIfLabel(1)
+        self.nextFatherLabel = self.generate.getNextLabel()
         
         compareExpression = self.visit(ctx.children[1])
         thenType = self.visit(ctx.children[3])
