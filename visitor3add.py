@@ -107,6 +107,17 @@ class IntermediateCode(ParseTreeVisitor):
             childCode = self.visitChildren(ctx)
             threeCode.add(childCode.code)
             threeCode.add(Quadruple('equal',childCode.address, None, variableName))
+            isTemporal = True
+            if childCode.address[0] == 't':
+                for i in range(1, len(childCode.address)):
+                    if not childCode.address[i].isdigit():
+                        isTemporal = False
+                        break
+            else:
+                isTemporal = False
+            if isTemporal:
+                self.generate.makeTemporalAvailable(childCode.address)
+
         else:
             #search default values
             variableType = ctx.children[2].getText()

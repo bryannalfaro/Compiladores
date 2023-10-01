@@ -33,6 +33,7 @@ class ThreeAddressCode():
 class Generator():
     def __init__(self):
         self.tempCounters = 0
+        self.availableCounters = []
         self.counterIf = 0
         self.counterNext=0
         self.counterBegin = 0
@@ -40,10 +41,16 @@ class Generator():
     
     
     def getTemporal(self):
-        temporal  = "t" + str(self.tempCounters)
-        self.tempCounters += 1
-
+        if (len(self.availableCounters) == 0):
+            temporal  = "t" + str(self.tempCounters)
+            self.tempCounters += 1
+        else:
+            temporal = self.availableCounters[0]
+            self.availableCounters.remove(temporal)
         return temporal
+
+    def makeTemporalAvailable(self, temporal):
+        self.availableCounters.append(temporal)
     
     def getIfLabel(self, amount, label=None):
         if amount == 1:
