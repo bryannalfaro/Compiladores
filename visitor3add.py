@@ -264,6 +264,18 @@ class IntermediateCode(ParseTreeVisitor):
         parentCheck = self.current_class
         funcParentCheck = self.current_class
 
+        threeCode = ThreeAddressCode()
+        threeCode.addAddress('R')
+        '''
+        threeCode.add(Quadruple('PARAMETER', None, None, ctx.children[5]))
+        PARAMETER a
+        PARAMETER b
+        CALL function_name
+        threeCode.add(Quadruple('CALL', None, None, ctx.children[6]))
+        '''
+        for i in range(callParameterCount):
+            threeCode.add(Quadruple('PARAMETER', None, None, ctx.children[2*i+2].getText()))
+
         while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
             parentCheck = self.symbol_table.getClassParent(parentCheck)
             if parentCheck != None:
@@ -276,7 +288,9 @@ class IntermediateCode(ParseTreeVisitor):
             #print("IM HERE CALL METHOD")
             if ctx.children[0].getText() == self.current_function:
                 if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)):
-                    return self.current_function_type
+                    functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+self.current_function_type+']'
+                    threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                    return threeCode
                 else:
                     self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + callParameterCount + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
                     return ErrorType
@@ -286,8 +300,12 @@ class IntermediateCode(ParseTreeVisitor):
                 #print("CALL TYPE CALL",callType)
                 if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
                     if callType == None:
-                        return self.current_function_type
-                    return callType
+                        functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+self.current_function_type+']'
+                        threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                        return threeCode
+                    functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+callType+']'
+                    threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                    return threeCode
                 else:
                     localCurrentClass = 'global.' + self.current_class
                     self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + str(callParameterCount) + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), localCurrentClass)) + ")"))
@@ -304,23 +322,31 @@ class IntermediateCode(ParseTreeVisitor):
             ioCallType = self.symbol_table.getCategoryScope(ctx.children[0].getText(), 'global.IO')
             #print("CALL TYPE CALL",callType)
             if ioCallType != None:
-                return ioCallType
+                functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+ioCallType+']'
+                threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                return threeCode
             if callType == None:
                 #print("SEARCHING FUNCTION TABLE")
                 callType = self.function_table.getCategoryScope(ctx.children[0].getText(), 'global.' + parentCheck)
                 if callType == None:
                     if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
-                        return self.current_function_type
+                        functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+self.current_function_type+']'
+                        threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                        return threeCode
                     else:
                         self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + str(callParameterCount) + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
                         return ErrorType
                 else:
                     if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
-                        return callType
+                        functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+callType+']'
+                        threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                        return threeCode
                     else:
                         self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + str(callParameterCount) + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
                         return ErrorType
-            return callType
+            functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+callType+']'
+            threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+            return threeCode
 
 
     # Visit a parse tree produced by YAPLParser#newtype.

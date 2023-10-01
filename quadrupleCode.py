@@ -25,3 +25,7 @@ class Quadruple(object):
             return self.result + ':'
         elif self.op == 'return':
             return self.op + ' ' + self.arg1
+        elif self.op == 'CALL':
+            return self.op + ' ' + self.result + ', ' + self.arg1
+        elif self.op == 'PARAMETER':
+            return self.op + ' ' + self.result
