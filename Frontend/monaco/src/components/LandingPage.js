@@ -73,7 +73,9 @@ const Landing = () => {
         "Access-Control-Allow-Origin": "*",
       },
     }).then((res) => {
+      console.log("res.data", res.data, res.data.result);
       setOutputDetails(res.data);
+
       setProcessing(false);
     }).catch((err) => {
       console.log("err", err);
@@ -195,7 +197,7 @@ const Landing = () => {
           />
           <h1 className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 mb-2">Three Address Code </h1>
           <CodeEditorWindow
-            code={code}
+            code={outputDetails?.code || ""}
             language={"txt"}
             theme={theme.value}
           />

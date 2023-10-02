@@ -7,7 +7,8 @@ const CodeEditorWindow = ({ onChange, language, code, theme }) => {
 
   const handleEditorChange = (value) => {
     setValue(value);
-    onChange("code", value);
+    onChange && onChange("code", value);
+
   };
 
   return (
@@ -16,9 +17,9 @@ const CodeEditorWindow = ({ onChange, language, code, theme }) => {
         height="38vh"
         width={`100%`}
         language={language || "javascript"}
-        value={value}
+        value={code}
         theme={theme}
-        defaultValue="// some comment"
+        defaultValue={code}
         onChange={handleEditorChange}
       />
     </div>
