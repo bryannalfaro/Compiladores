@@ -57,7 +57,7 @@ def evaluate_expression(input_str):
             cprint("Type errors found","red")
             for error in visitor.errors_list:
                 print(error)
-            visitor.symbol_table.printTable()
+            # visitor.symbol_table.printTable()
              #intermediate code
             cprint("INTERMEDIATE CODE","green")
             intermediate = IntermediateCode(visitor.symbol_table)
@@ -85,7 +85,7 @@ def evaluate_expression(input_str):
                             visitor.symbol_table.setSize(unsized, 1)
                         
             visitor.symbol_table.reviewOffsets()
-            visitor.symbol_table.printTable()
+            # visitor.symbol_table.printTable()
             #intermediate code
             cprint("INTERMEDIATE CODE","green")
             intermediate = IntermediateCode(visitor.symbol_table)

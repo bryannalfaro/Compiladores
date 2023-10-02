@@ -3,6 +3,7 @@ class Main{
   b: Int <- 4+5*a;
   c: Bool <- not true;
   d: Int <- sum(3, 4);
+  e: Int <- (new Perro).perro();
 
    main(): Object{
     while 5<4

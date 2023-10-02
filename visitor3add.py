@@ -1,6 +1,7 @@
 from antlr4 import *
 from ANTLR.YAPLParser import YAPLParser
 from listenerError import MyErrorVisitor
+from VisitorImpl import YAPL as originalVisitor
 from termcolor import cprint    
 from SymbolTable import *
 from threeAddress import *
@@ -296,7 +297,7 @@ class IntermediateCode(ParseTreeVisitor):
         threeCode.add(Quadruple('CALL', None, None, ctx.children[6]))
         '''
         for i in range(callParameterCount):
-            threeCode.add(Quadruple('PARAMETER', None, None, ctx.children[2*i+2].getText()))
+            threeCode.add(Quadruple('PARAMETER', None, None, self.visit(ctx.children[2*i+2]).address))
 
         while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
             parentCheck = self.symbol_table.getClassParent(parentCheck)
@@ -373,9 +374,19 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#newtype.
     def visitNewtype(self, ctx:YAPLParser.NewtypeContext):
+        threeCode = ThreeAddressCode()
+        className = ctx.children[1].getText() if ctx.children[1].getText() != SELF_TYPE else self.current_class
+        threeCode.addAddress('class_' + className)
+        threeCode.add(Quadruple('new', None, None, className))
         self.visit(ctx.children[0])
         # Return Type
-        return ctx.children[1].getText() if ctx.children[1].getText() != SELF_TYPE else self.current_class
+        return threeCode
+
+    def getNewtype(self, ctx:YAPLParser.NewtypeContext):
+        print('HERE', ctx.children[0].getText())
+        newType = ctx.children[1].getText() if ctx.children[1].getText() != SELF_TYPE else self.current_class
+        print('NEW TYPE', newType)
+        return newType
 
 
     # Visit a parse tree produced by YAPLParser#timesdiv.
@@ -575,13 +586,19 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#bigexpr.
     def visitBigexpr(self, ctx:YAPLParser.BigexprContext):
-        print('im here ')
-        # Return ID type
-        callerType = self.visit(ctx.children[0])
-        for i in range(1, len(ctx.children)):
-            self.visit(ctx.children[i])
-        #print("BIG EXPR TYPE",callerType)
+        print('im here bigexpr')
+        threeCode = ThreeAddressCode()
+        threeCode.addAddress('R')
+
         idIndex = 4 if ctx.children[1].getText() == '@' else 2
+
+        bigexprChildCount = int((len(ctx.children) - idIndex - 3) / 2 + 0.5)
+        ## Add parameters
+        for i in range(idIndex + 2, len(ctx.children) - 1, 2):
+            threeCode.add(Quadruple('PARAMETER', None, None, self.visit(ctx.children[i]).address))
+        # Return ID type
+        tempVisitor = originalVisitor()
+        callerType = tempVisitor.visit(ctx.children[0])
         #print('CHECKING', callerType, ctx.children[idIndex].getText())
         existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
         inFunctionTableExistence = self.function_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
@@ -604,8 +621,12 @@ class IntermediateCode(ParseTreeVisitor):
                 # Function defined in non visited class/method
                 bigExprType = self.function_table.getCategoryScope(ctx.children[idIndex].getText(), 'global.' + funcParentCheck)
                 if bigExprType == None:
-                    return self.current_function_type
-                return bigExprType
+                    functionName = 'function_'+ctx.children[idIndex].getText()+'_'+self.current_class+'['+self.current_function_type+']'
+                    threeCode.add(Quadruple('CALL', str(bigexprChildCount), None, functionName))
+                    return threeCode
+                functionName = 'function_'+ctx.children[idIndex].getText()+'_'+self.current_class+'['+bigExprType+']'
+                threeCode.add(Quadruple('CALL', str(bigexprChildCount), None, functionName))
+                return threeCode
             #TODO change this when class definition error is fixed
             #self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[idIndex].getText()+" in dispatch on " + self.visit(ctx.children[idIndex])))
             self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[idIndex].getText()+" in dispatch on " +self.current_class))
@@ -614,5 +635,9 @@ class IntermediateCode(ParseTreeVisitor):
         else:
             bigExprType = self.symbol_table.getCategoryScope(ctx.children[idIndex].getText(), 'global.' + parentCheck)
             if bigExprType == None:
-                return self.current_function_type
-            return bigExprType
+                functionName = 'function_'+ctx.children[idIndex].getText()+'_'+self.current_class+'['+self.current_function_type+']'
+                threeCode.add(Quadruple('CALL', str(bigexprChildCount), None, functionName))
+                return threeCode
+            functionName = 'function_'+ctx.children[idIndex].getText()+'_'+self.current_class+'['+bigExprType+']'
+            threeCode.add(Quadruple('CALL', str(bigexprChildCount), None, functionName))
+            return threeCode
