@@ -10,6 +10,7 @@ from termcolor import cprint
 from customLex import CustomLexer
 from flask import Flask,request, jsonify
 from flask_cors import CORS
+from visitor3add import IntermediateCode
 
 app = Flask(__name__)
 
@@ -22,6 +23,7 @@ def hello_world():
 @app.route('/yapl_compile', methods=['POST'])
 def yapl_compile():
     results = []
+    code_string = ''
     input_stream = InputStream(request.get_json()['code'])
     lexer = CustomLexer(input_stream)
     token_stream = CommonTokenStream(lexer)
@@ -64,13 +66,20 @@ def yapl_compile():
         visitor.symbol_table.printTable()
       else:
           cprint("No type errors found","green")
+          cprint("INTERMEDIATE CODE","green")
+          
+          intermediate = IntermediateCode(visitor.symbol_table)
+          code  = intermediate.visit(tree)
+          for line in code:
+                code_string += str(line) + '\n'
           #print the symbol table
         #   visitor.symbol_table.printTable()
     # Get the errors
     
     for error in visitor.errors_list:
         results.append(error.__str__())
-    return jsonify({'result': results
+    return jsonify({'result': results,
+                    'code': code_string
                     })
 
 if __name__ == '__main__':
