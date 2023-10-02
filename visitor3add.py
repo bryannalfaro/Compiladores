@@ -190,20 +190,31 @@ class IntermediateCode(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#curly.
     def visitCurly(self, ctx:YAPLParser.CurlyContext):
         print('im here ')
+
+        '''
+        threeCode = ThreeAddressCode()
+        expr = self.visit(ctx.children[1])
+        threeCode.addAddress(expr.address)
+        threeCode.add(expr.code)
+
+        return threeCode
+        '''
+
+        threeCode = ThreeAddressCode()
+
         # Visit all children, but return type of last <expr>
         for index, child in enumerate(ctx.children):
-            if index != len(ctx.children) - 3:
-                self.visit(child)
+            if index == 0:
+                continue
+            elif index != len(ctx.children) - 3:
+                if self.visit(child) is not None:
+                    expr = self.visit(child)
+                    threeCode.add(expr.code)
             else:
-                #print(ctx.children[-2].getText())
-
-                self.visit(ctx.children[-2])
-                #print(ctx.children[-1].getText())
-                self.visit(ctx.children[-1])
                 last = self.visit(child)
-                #print(child.getText())
-                #cprint("LAST: "+str(last),"blue")
-                return last
+                threeCode.add(last.code)
+                threeCode.addAddress(last.address)
+                return threeCode
 
 
     # Visit a parse tree produced by YAPLParser#string.

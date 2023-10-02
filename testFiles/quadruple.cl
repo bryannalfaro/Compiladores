@@ -11,9 +11,10 @@ class Main{
       pool
   };
 
-  sum(a: Int, b: Int): Int {
-    a+b
-  };
+  sum(a: Int, b: Int): Int {{
+    a-b;
+    a+b;
+  }};
 
 
 } ;
