@@ -257,6 +257,14 @@ class SymbolTable():
                         local_offset += local_var.width
                 global_offset += feat.width
 
+    def getAllFunctionsWithName(self, name):
+        variables = []
+        for entry in self.table:
+            if entry.type == 'function':
+                if entry.data["name"] == name:
+                    variables.append(entry)
+        return variables
+
 
     def set(self, name, value):
         self.table[name] = value

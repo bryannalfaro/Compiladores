@@ -213,6 +213,7 @@ class IntermediateCode(ParseTreeVisitor):
                     threeCode.add(expr.code)
             else:
                 last = self.visit(child)
+                cprint(last,'green')
                 threeCode.add(last.code)
                 threeCode.addAddress(last.address)
                 return threeCode
@@ -239,6 +240,7 @@ class IntermediateCode(ParseTreeVisitor):
         threeCode  = ThreeAddressCode()
         threeCode.typeValue = BoolType
         threeCode.addAddress(ctx.getText())
+        threeCode.add(Quadruple('goto',None, None, self.fatherFalseLabel))
         return threeCode
 
 
@@ -446,6 +448,7 @@ class IntermediateCode(ParseTreeVisitor):
         threeCode  = ThreeAddressCode()
         threeCode.typeValue = BoolType
         threeCode.addAddress(ctx.getText())
+        threeCode.add(Quadruple('goto',None, None, self.fatherTrueLabel))
         return threeCode
 
 
@@ -476,6 +479,7 @@ class IntermediateCode(ParseTreeVisitor):
         variableType = None
         variableValue = None
         #print("ENTERING LET")
+        threeCode = ThreeAddressCode()
         for index, child in enumerate(ctx.children):
             #print("INSIDE FOR")
             if child.getText() == ',' or child.getText() == 'IN' or child.getText() == 'in':
@@ -487,16 +491,11 @@ class IntermediateCode(ParseTreeVisitor):
                 #print("SI ENTRO")
                 #sizes
                 if variableType in self.defaultValues and variableType != StringType:
-                    self.symbol_table.add(variableType, 'variable', self.defaultValues[variableType]['size'], self.local_offset, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
-                    self.local_offset += self.defaultValues[variableType]['size']
+                    threeCode.add(Quadruple('equal',variableValue, None, variableName+str(self.current_let)))
                 elif variableType == StringType:
-                    #size of string * length of variable
-                    #-1 because of the quotes but the end of string
-                    size = (self.defaultValues[variableType]['size'] * len(variableValue))+10
-                    self.symbol_table.add(variableType, 'variable', size, self.local_offset, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
-                    self.local_offset += size
+                    threeCode.add(Quadruple('equal',variableValue, None, variableName+str(self.current_let)))
                 else:
-                    self.symbol_table.add(variableType, 'variable', None, 0, {'name': variableName, 'value': variableValue, 'scope': 'local.' + self.current_class + '.' + self.current_function + '.let' + str(self.current_let)})
+                    threeCode.add(Quadruple('equal',variableValue, None, variableName+str(self.current_let)))
                 variableName = None
                 variableType = None
                 variableValue = None
@@ -515,13 +514,18 @@ class IntermediateCode(ParseTreeVisitor):
                     variableValue = self.visit(child)
                 else:
                     self.current_let += 1
-                    return self.visit(child)
-
+                    cprint("CURRENT LET", 'red')
+                    threeCode.code = self.visit(child).code
+        return threeCode
     # Visit a parse tree produced by YAPLParser#id.
     def visitId(self, ctx:YAPLParser.IdContext):
         threeCode = ThreeAddressCode()
+        cprint(ctx.getText(),'blue')
         if ctx.getText() == 'self': #si es self
-            return threeCode.addAddress('self')
+            threeCode.add(Quadruple('equal', 'self', None, 'self'))
+            threeCode.addAddress('self')
+            return threeCode
+        
         else:
             #@TODO agregar el caso en 3add code cuando entre aca
             classScope = 'global.' + str(self.current_class)
@@ -592,6 +596,10 @@ class IntermediateCode(ParseTreeVisitor):
 
         idIndex = 4 if ctx.children[1].getText() == '@' else 2
 
+        idType = self.symbol_table.getAllFunctionsWithName(ctx.children[idIndex].getText())
+        cprint(idType, 'red')
+        cprint(ctx.children[idIndex].getText(), 'red')
+
         bigexprChildCount = int((len(ctx.children) - idIndex - 3) / 2 + 0.5)
         ## Add parameters
         for i in range(idIndex + 2, len(ctx.children) - 1, 2):
@@ -599,6 +607,7 @@ class IntermediateCode(ParseTreeVisitor):
         # Return ID type
         tempVisitor = originalVisitor()
         callerType = tempVisitor.visit(ctx.children[0])
+        cprint(callerType, 'red')
         #print('CHECKING', callerType, ctx.children[idIndex].getText())
         existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
         inFunctionTableExistence = self.function_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
