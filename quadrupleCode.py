@@ -31,3 +31,5 @@ class Quadruple(object):
             return self.op + ' ' + self.result
         elif self.op == 'new':
             return self.op + ' class_' + self.result
+        elif self.op == 'boolean':
+            return self.op + ' ' + self.result

@@ -34,6 +34,7 @@ class Generator():
     def __init__(self):
         self.tempCounters = 0
         self.availableCounters = []
+        self.stackIfNeeded = []
         self.counterIf = 0
         self.counterNext=0
         self.counterBegin = 0

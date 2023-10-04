@@ -20,6 +20,9 @@ class IntermediateCode(ParseTreeVisitor):
         self.fatherFalseLabel = False
         self.nextFatherLabel = False
         self.beginLabel = False
+        self.inheritsWhile1 = []
+        
+        
 
         self.defaultValues = {
             IntType: { 'value': 0, 'size': 4 },
@@ -190,7 +193,7 @@ class IntermediateCode(ParseTreeVisitor):
         
     # Visit a parse tree produced by YAPLParser#curly.
     def visitCurly(self, ctx:YAPLParser.CurlyContext):
-        print('im here ')
+        print('im here curly')
 
         '''
         threeCode = ThreeAddressCode()
@@ -200,7 +203,7 @@ class IntermediateCode(ParseTreeVisitor):
 
         return threeCode
         '''
-
+        #print parent ctx
         threeCode = ThreeAddressCode()
 
         # Visit all children, but return type of last <expr>
@@ -238,34 +241,53 @@ class IntermediateCode(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#false.
     def visitFalse(self, ctx:YAPLParser.FalseContext):
         threeCode  = ThreeAddressCode()
+        
         threeCode.typeValue = BoolType
         threeCode.addAddress(ctx.getText())
-        threeCode.add(Quadruple('goto',None, None, self.fatherFalseLabel))
+        try:
+            fatherFalseLabel = ctx.parentCtx.falseLabel
+            if fatherFalseLabel != '':
+                threeCode.add(Quadruple('goto',None, None, fatherFalseLabel))
+            else:
+                threeCode.add(Quadruple('boolean',None, None, ctx.getText()))
+        except:
+            return threeCode
         return threeCode
 
 
     # Visit a parse tree produced by YAPLParser#while.
     def visitWhile(self, ctx:YAPLParser.WhileContext):
-
-        self.nextFatherLabel = self.generate.getNextLabel()
-        self.fatherFalseLabel = copy.deepcopy(self.nextFatherLabel) #hago copia B.false = S.siguiente
-        self.fatherTrueLabel = self.generate.getWhileLabel(0, 'true') 
-        compareExpression = self.visit(ctx.children[1])
-        whileType = self.visit(ctx.children[3])
-        
-        
-        self.nextFatherLabel = self.beginLabel #cambio nextFather S1.siguiente = inicio
-
-
         threeCode = ThreeAddressCode()
-        self.beginLabel  = self.generate.getBeginLabel()
-        threeCode.add(Quadruple('label', None, None, self.beginLabel))
-        threeCode.add(compareExpression.code)
-        threeCode.add(Quadruple('label', None, None, self.fatherTrueLabel))
-        threeCode.add(whileType.code)
-        threeCode.add(Quadruple('goto', None, None, self.beginLabel))
-        threeCode.add(Quadruple('label', None, None, self.fatherFalseLabel))
+        
+        
+        try:
+            fatherTrueLabel = ctx.parentCtx.trueLabel
+            fatherBeginLabel = ctx.parentCtx.beginLabel
+            fatherFalseLabel = ctx.parentCtx.nextLabel
+        except:
+            fatherBeginLabel  = self.generate.getBeginLabel()
+            fatherTrueLabel = self.generate.getWhileLabel(0, 'true') 
+            fatherFalseLabel = self.generate.getNextLabel() 
+            
+            ctx.trueLabel = fatherTrueLabel
+            ctx.beginLabel = fatherBeginLabel
+            ctx.falseLabel = fatherFalseLabel
+            
 
+        print('false' , fatherFalseLabel)
+        nextLabel = fatherBeginLabel
+        ctx.nextLabel = nextLabel
+        
+        compareExpression = self.visit(ctx.children[1])
+        threeCode.add(Quadruple('label', None, None, fatherBeginLabel))
+        threeCode.add(compareExpression.code)
+        threeCode.add(Quadruple('label', None, None, fatherTrueLabel))
+        whileType = self.visit(ctx.children[3])
+        threeCode.add(whileType.code)
+        threeCode.add(Quadruple('goto', None, None, fatherBeginLabel))
+        print(self.fatherFalseLabel)
+        threeCode.add(Quadruple('label', None, None, fatherFalseLabel))
+       
         return threeCode
 
 
@@ -414,11 +436,16 @@ class IntermediateCode(ParseTreeVisitor):
         left = results[0]
         right = results[-1]
 
+        trueLabel  = ctx.parentCtx.trueLabel
+        falseLabel = ctx.parentCtx.falseLabel
+
         threeCode = ThreeAddressCode()
         threeCode.add(left.code)
         threeCode.add(right.code)
-        threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, self.fatherTrueLabel))
-        threeCode.add(Quadruple('goto', None, None, self.fatherFalseLabel))
+        threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, trueLabel))
+        threeCode.add(Quadruple('goto', None, None, falseLabel))
+        #self.inheritsWhile1 = []
+        
         return threeCode
            
 
@@ -448,7 +475,14 @@ class IntermediateCode(ParseTreeVisitor):
         threeCode  = ThreeAddressCode()
         threeCode.typeValue = BoolType
         threeCode.addAddress(ctx.getText())
-        threeCode.add(Quadruple('goto',None, None, self.fatherTrueLabel))
+        try:
+            fatherTrueLabel = ctx.parentCtx.trueLabel
+            if fatherTrueLabel != '':
+                threeCode.add(Quadruple('goto',None, None, fatherTrueLabel))
+            else:
+                threeCode.add(Quadruple('boolean',None, None, ctx.getText()))
+        except:
+            return threeCode
         return threeCode
 
 
@@ -559,20 +593,35 @@ class IntermediateCode(ParseTreeVisitor):
     
     # Visit a parse tree produced by YAPLParser#if.
     def visitIf(self, ctx:YAPLParser.IfContext):
-        self.fatherTrueLabel, self.fatherFalseLabel = self.generate.getIfLabel(1)
-        self.nextFatherLabel = self.generate.getNextLabel()
+        threeCode = ThreeAddressCode()
+        fatherTrueLabel, fatherFalseLabel = self.generate.getIfLabel(1)
+        
+            
+        fatherNextLabel = self.generate.getNextLabel()
+       
+            
+        
+        ctx.trueLabel = fatherTrueLabel
+        ctx.falseLabel = fatherFalseLabel
+        ctx.nextLabel = fatherNextLabel
+        
         
         compareExpression = self.visit(ctx.children[1])
-        thenType = self.visit(ctx.children[3])
-        elseType = self.visit(ctx.children[5])
-
-        threeCode = ThreeAddressCode()
+        
         threeCode.add(compareExpression.code)
-        threeCode.add(Quadruple('label', None, None, self.fatherTrueLabel))
+        threeCode.add(Quadruple('label', None, None, fatherTrueLabel))
+        ctx.trueLabel = ''
+        ctx.falseLabel = ''
+        thenType = self.visit(ctx.children[3])
         threeCode.add(thenType.code)
-        threeCode.add(Quadruple('goto', None, None, self.nextFatherLabel))
-        threeCode.add(Quadruple('label', None, None, self.fatherFalseLabel))
+        
+        threeCode.add(Quadruple('goto', None, None, fatherNextLabel))
+        threeCode.add(Quadruple('label', None, None, fatherFalseLabel))
+        ctx.trueLabel = ''
+        ctx.falseLabel = ''
+        elseType = self.visit(ctx.children[5])
         threeCode.add(elseType.code)
+        threeCode.add(Quadruple('label', None, None, fatherNextLabel))
 
         return threeCode
 
