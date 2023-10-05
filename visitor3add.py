@@ -302,6 +302,15 @@ class IntermediateCode(ParseTreeVisitor):
     def visitCall(self, ctx:YAPLParser.CallContext):
         # print('im here ')
         print("CALL")
+        #Se ve si proviene de un if para agregar un texto distinto
+        try:
+            fatherTrueLabel = ctx.parentCtx.trueLabel
+            fatherFalseLabel = ctx.parentCtx.falseLabel
+            fatherNextLabel = ctx.parentCtx.nextLabel
+        except:
+            fatherTrueLabel = ''
+            fatherFalseLabel = ''
+            fatherNextLabel = ''
         self.visitChildren(ctx)
         # Return ID type
         #print("CHILDREN 0 CALL",ctx.children[0].getText())
@@ -341,6 +350,11 @@ class IntermediateCode(ParseTreeVisitor):
                     threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
                     responseTemporal = self.generate.getTemporal()
                     threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
+                    if fatherTrueLabel != '':
+
+                         threeCode.add(Quadruple('big', responseTemporal, None, fatherTrueLabel))
+                    if fatherFalseLabel != '':
+                        threeCode.add(Quadruple('goto', None, None, fatherFalseLabel))
                     return threeCode
                 else:
                     self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + callParameterCount + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
@@ -355,11 +369,19 @@ class IntermediateCode(ParseTreeVisitor):
                         threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
                         responseTemporal = self.generate.getTemporal()
                         threeCode.add(Quadruple('equal', responseTemporal, None, 'R'))
+                        if fatherTrueLabel != '':
+                         threeCode.add(Quadruple('big', responseTemporal, None, fatherTrueLabel))
+                        if fatherFalseLabel != '':
+                          threeCode.add(Quadruple('goto', None, None, fatherFalseLabel))
                         return threeCode
                     functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+callType+']'
                     threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
                     responseTemporal = self.generate.getTemporal()
                     threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
+                    if fatherTrueLabel != '':
+                         threeCode.add(Quadruple('big', responseTemporal, None, fatherTrueLabel))
+                    if fatherFalseLabel != '':
+                        threeCode.add(Quadruple('goto', None, None, fatherFalseLabel))
                     return threeCode
                 else:
                     localCurrentClass = 'global.' + self.current_class
@@ -381,6 +403,10 @@ class IntermediateCode(ParseTreeVisitor):
                 threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
                 responseTemporal = self.generate.getTemporal()
                 threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
+                if fatherTrueLabel != '':
+                         threeCode.add(Quadruple('big', responseTemporal, None, fatherTrueLabel))
+                if fatherFalseLabel != '':
+                        threeCode.add(Quadruple('goto', None, None, fatherFalseLabel))
                 return threeCode
             if callType == None:
                 #print("SEARCHING FUNCTION TABLE")
@@ -391,6 +417,10 @@ class IntermediateCode(ParseTreeVisitor):
                         threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
                         responseTemporal = self.generate.getTemporal()
                         threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
+                        if fatherTrueLabel != '':
+                         threeCode.add(Quadruple('big', responseTemporal, None, fatherTrueLabel))
+                        if fatherFalseLabel != '':
+                          threeCode.add(Quadruple('goto', None, None, fatherFalseLabel))
                         return threeCode
                     else:
                         self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + str(callParameterCount) + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
@@ -401,6 +431,10 @@ class IntermediateCode(ParseTreeVisitor):
                         threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
                         responseTemporal = self.generate.getTemporal()
                         threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
+                        if fatherTrueLabel != '':
+                         threeCode.add(Quadruple('big', responseTemporal, None, fatherTrueLabel))
+                        if fatherFalseLabel != '':
+                          threeCode.add(Quadruple('goto', None, None, fatherFalseLabel))
                         return threeCode
                     else:
                         self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + str(callParameterCount) + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
@@ -409,6 +443,10 @@ class IntermediateCode(ParseTreeVisitor):
             threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
             responseTemporal = self.generate.getTemporal()
             threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
+            if fatherTrueLabel != '':
+                         threeCode.add(Quadruple('big', responseTemporal, None, fatherTrueLabel))
+            if fatherFalseLabel != '':
+                        threeCode.add(Quadruple('goto', None, None, fatherFalseLabel))
             return threeCode
 
 
@@ -441,6 +479,7 @@ class IntermediateCode(ParseTreeVisitor):
         right = results[-1]
         threeCode = ThreeAddressCode()
         threeCode.addAddress(self.generate.getTemporal())
+        print('left times', left)
         threeCode.add(left.code)
         threeCode.add(right.code)
         threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, threeCode.address))
@@ -583,10 +622,15 @@ class IntermediateCode(ParseTreeVisitor):
             #@TODO agregar el caso en 3add code cuando entre aca
             classScope = 'global.' + str(self.current_class)
             functionScope = 'global.' + str(self.current_class) + '.' + str(self.current_function)
-            letScope = 'local.' + str(self.current_class) + '.' + str(self.current_function) + '.let' + str(self.current_let-1)
             paramScope = 'local.' + str(self.current_class) + '.' + str(self.current_function)
-
-            variable = self.symbol_table.getIdByScope(ctx.getText(), letScope)
+            
+            #Se busca en todos los let
+            variable = None
+            counter = self.current_let
+            while counter >= 0 and variable == None:
+                letScope = 'local.' + str(self.current_class) + '.' + str(self.current_function) + '.let' + str(counter)
+                variable = self.symbol_table.getIdByScope(ctx.getText(), letScope)
+                counter -= 1
             generatedTemp = self.generate.getTemporal()
             if variable == None:
                 variable = self.symbol_table.getIdByScope(ctx.getText(), paramScope)
@@ -627,7 +671,10 @@ class IntermediateCode(ParseTreeVisitor):
         
         
         compareExpression = self.visit(ctx.children[1])
-        
+        # if len(compareExpression.code) > 2:
+        #     #get last 2
+        #     threeCode.add(compareExpression.code)
+        #     compareExpression.code = compareExpression.code[-2:]
         threeCode.add(compareExpression.code)
         threeCode.add(Quadruple('label', None, None, fatherTrueLabel))
         ctx.trueLabel = ''
