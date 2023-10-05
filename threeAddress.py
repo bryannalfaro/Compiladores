@@ -52,6 +52,9 @@ class Generator():
 
     def makeTemporalAvailable(self, temporal):
         self.availableCounters.append(temporal)
+
+    def makeTemporalAvailableFirst(self, temporal):
+        self.availableCounters.insert(0, temporal)
     
     def getIfLabel(self, amount, label=None):
         if amount == 1:

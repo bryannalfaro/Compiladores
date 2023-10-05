@@ -300,8 +300,8 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#call.
     def visitCall(self, ctx:YAPLParser.CallContext):
-        print('im here ')
-        #print("CALL")
+        # print('im here ')
+        print("CALL")
         self.visitChildren(ctx)
         # Return ID type
         #print("CHILDREN 0 CALL",ctx.children[0].getText())
@@ -312,7 +312,7 @@ class IntermediateCode(ParseTreeVisitor):
         funcParentCheck = self.current_class
 
         threeCode = ThreeAddressCode()
-        threeCode.addAddress('R')
+        threeCode.addAddress(self.generate.getTemporal())
         '''
         threeCode.add(Quadruple('PARAMETER', None, None, ctx.children[5]))
         PARAMETER a
@@ -321,7 +321,9 @@ class IntermediateCode(ParseTreeVisitor):
         threeCode.add(Quadruple('CALL', None, None, ctx.children[6]))
         '''
         for i in range(callParameterCount):
-            threeCode.add(Quadruple('PARAMETER', None, None, self.visit(ctx.children[2*i+2]).address))
+            element = self.visit(ctx.children[2*i+2])
+            threeCode.add(element.code)
+            threeCode.add(Quadruple('PARAMETER', None, None, element.address))
 
         while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
             parentCheck = self.symbol_table.getClassParent(parentCheck)
@@ -337,6 +339,8 @@ class IntermediateCode(ParseTreeVisitor):
                 if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)):
                     functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+self.current_function_type+']'
                     threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                    responseTemporal = self.generate.getTemporal()
+                    threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                     return threeCode
                 else:
                     self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + callParameterCount + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
@@ -349,9 +353,13 @@ class IntermediateCode(ParseTreeVisitor):
                     if callType == None:
                         functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+self.current_function_type+']'
                         threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                        responseTemporal = self.generate.getTemporal()
+                        threeCode.add(Quadruple('equal', responseTemporal, None, 'R'))
                         return threeCode
                     functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+callType+']'
                     threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                    responseTemporal = self.generate.getTemporal()
+                    threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                     return threeCode
                 else:
                     localCurrentClass = 'global.' + self.current_class
@@ -371,6 +379,8 @@ class IntermediateCode(ParseTreeVisitor):
             if ioCallType != None:
                 functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+ioCallType+']'
                 threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                responseTemporal = self.generate.getTemporal()
+                threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                 return threeCode
             if callType == None:
                 #print("SEARCHING FUNCTION TABLE")
@@ -379,6 +389,8 @@ class IntermediateCode(ParseTreeVisitor):
                     if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
                         functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+self.current_function_type+']'
                         threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                        responseTemporal = self.generate.getTemporal()
+                        threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                         return threeCode
                     else:
                         self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + str(callParameterCount) + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
@@ -387,12 +399,16 @@ class IntermediateCode(ParseTreeVisitor):
                     if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
                         functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+callType+']'
                         threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+                        responseTemporal = self.generate.getTemporal()
+                        threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                         return threeCode
                     else:
                         self.errors_list.append(MyErrorVisitor(ctx, "Wrong number of actual arguments (" + str(callParameterCount) + " vs. " + str(self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)) + ")"))
                         return ErrorType
             functionName = 'function_'+ctx.children[0].getText()+'_'+self.current_class+'['+callType+']'
             threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionName))
+            responseTemporal = self.generate.getTemporal()
+            threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
             return threeCode
 
 
@@ -406,10 +422,13 @@ class IntermediateCode(ParseTreeVisitor):
         # Return Type
         return threeCode
 
-    def getNewtype(self, ctx:YAPLParser.NewtypeContext):
-        print('HERE', ctx.children[0].getText())
-        newType = ctx.children[1].getText() if ctx.children[1].getText() != SELF_TYPE else self.current_class
-        print('NEW TYPE', newType)
+    def getNewtype(self, new):
+        indexOfNew = new.index('new')
+        newType = ''
+        i = indexOfNew + 4
+        while new[i] != ' ' and new[i] != ')':
+            newType += new[i]
+            i += 1
         return newType
 
 
@@ -641,36 +660,41 @@ class IntermediateCode(ParseTreeVisitor):
     def visitBigexpr(self, ctx:YAPLParser.BigexprContext):
         print('im here bigexpr')
         threeCode = ThreeAddressCode()
-        threeCode.addAddress('R')
-        
+        threeCode.addAddress(self.generate.getTemporal())
         #Evaluar si el padre tiene etiqueta (caso de if)
-        try:
-            trueLabel  = ctx.parentCtx.trueLabel
-            falseLabel = ctx.parentCtx.falseLabel
-        except:
-            trueLabel = None
-            falseLabel = None
+        # try:
+        #     trueLabel  = ctx.parentCtx.trueLabel
+        #     falseLabel = ctx.parentCtx.falseLabel
+        # except:
+        #     trueLabel = None
+        #     falseLabel = None
 
-        if trueLabel != '' and falseLabel != '':
-             print('bigexpr',trueLabel, falseLabel, 'bigexpr')
-             threeCode.add(Quadruple('big', ctx.getText(), None, trueLabel))
-             threeCode.add(Quadruple('goto', None, None, falseLabel))
-             return threeCode
+        # if trueLabel != '' and falseLabel != '':
+        #      threeCode.add(Quadruple('big', ctx.getText(), None, trueLabel))
+        #      threeCode.add(Quadruple('goto', None, None, falseLabel))
+        #      return threeCode
 
         idIndex = 4 if ctx.children[1].getText() == '@' else 2
+        if idIndex == 4:
+            callerType = ctx.children[2].getText()
+        else:
+            firstExpr = ctx.children[0].getText()
+            if 'new' in firstExpr:
+                callerType = self.getNewtype(ctx.children[0].getText())
+            else:
+                element = self.symbol_table.getIdByScope(ctx.children[0].getText(), 'global.' + self.current_class)
+                callerType = element.getCategory()
 
-        idType = self.symbol_table.getAllFunctionsWithName(ctx.children[idIndex].getText())
-        cprint(idType, 'red')
+        cprint(callerType, 'red')
         cprint(ctx.children[idIndex].getText(), 'red')
 
         bigexprChildCount = int((len(ctx.children) - idIndex - 3) / 2 + 0.5)
         ## Add parameters
         for i in range(idIndex + 2, len(ctx.children) - 1, 2):
-            threeCode.add(Quadruple('PARAMETER', None, None, self.visit(ctx.children[i]).address))
+            element = self.visit(ctx.children[i])
+            threeCode.add(element.code)
+            threeCode.add(Quadruple('PARAMETER', None, None, element.address))
         # Return ID type
-        tempVisitor = originalVisitor()
-        callerType = tempVisitor.visit(ctx.children[0])
-        cprint(callerType, 'red')
         #print('CHECKING', callerType, ctx.children[idIndex].getText())
         existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
         inFunctionTableExistence = self.function_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
@@ -695,9 +719,13 @@ class IntermediateCode(ParseTreeVisitor):
                 if bigExprType == None:
                     functionName = 'function_'+ctx.children[idIndex].getText()+'_'+self.current_class+'['+self.current_function_type+']'
                     threeCode.add(Quadruple('CALL', str(bigexprChildCount), None, functionName))
+                    responseTemporal = self.generate.getTemporal()
+                    threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                     return threeCode
                 functionName = 'function_'+ctx.children[idIndex].getText()+'_'+self.current_class+'['+bigExprType+']'
                 threeCode.add(Quadruple('CALL', str(bigexprChildCount), None, functionName))
+                responseTemporal = self.generate.getTemporal()
+                threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                 return threeCode
             #TODO change this when class definition error is fixed
             #self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[idIndex].getText()+" in dispatch on " + self.visit(ctx.children[idIndex])))
@@ -709,7 +737,11 @@ class IntermediateCode(ParseTreeVisitor):
             if bigExprType == None:
                 functionName = 'function_'+ctx.children[idIndex].getText()+'_'+self.current_class+'['+self.current_function_type+']'
                 threeCode.add(Quadruple('CALL', str(bigexprChildCount), None, functionName))
+                responseTemporal = self.generate.getTemporal()
+                threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                 return threeCode
             functionName = 'function_'+ctx.children[idIndex].getText()+'_'+self.current_class+'['+bigExprType+']'
             threeCode.add(Quadruple('CALL', str(bigexprChildCount), None, functionName))
+            responseTemporal = self.generate.getTemporal()
+            threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
             return threeCode
