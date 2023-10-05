@@ -425,7 +425,7 @@ class IntermediateCode(ParseTreeVisitor):
     def getNewtype(self, new):
         indexOfNew = new.index('new')
         newType = ''
-        i = indexOfNew + 4
+        i = indexOfNew + 3
         while new[i] != ' ' and new[i] != ')':
             newType += new[i]
             i += 1
@@ -586,15 +586,15 @@ class IntermediateCode(ParseTreeVisitor):
             letScope = 'local.' + str(self.current_class) + '.' + str(self.current_function) + '.let' + str(self.current_let-1)
             paramScope = 'local.' + str(self.current_class) + '.' + str(self.current_function)
 
-            variable = self.symbol_table.getVariableCategory(ctx.getText(), letScope)
-            
+            variable = self.symbol_table.getIdByScope(ctx.getText(), letScope)
+            generatedTemp = self.generate.getTemporal()
             if variable == None:
-                variable = self.symbol_table.getVariableCategory(ctx.getText(), paramScope)
+                variable = self.symbol_table.getIdByScope(ctx.getText(), paramScope)
 
                 if variable == None:
-                    variable = self.symbol_table.getVariableCategory(ctx.getText(), functionScope)
+                    variable = self.symbol_table.getIdByScope(ctx.getText(), functionScope)
                     if variable == None:
-                     variable= self.symbol_table.getVariableCategory(ctx.getText(), classScope)
+                        variable= self.symbol_table.getIdByScope(ctx.getText(), classScope)
            
 
             if variable == None:
@@ -606,7 +606,8 @@ class IntermediateCode(ParseTreeVisitor):
                     self.visitChildren(ctx)
                     return ErrorType
             else:
-                threeCode.addAddress(ctx.getText())
+                threeCode.add(Quadruple('equal', generatedTemp, None, variable.data['value']))
+                threeCode.addAddress(generatedTemp)
                 return  threeCode
 
     
@@ -680,13 +681,13 @@ class IntermediateCode(ParseTreeVisitor):
         else:
             firstExpr = ctx.children[0].getText()
             if 'new' in firstExpr:
-                callerType = self.getNewtype(ctx.children[0].getText())
+                callerType = self.getNewtype(firstExpr)
             else:
-                element = self.symbol_table.getIdByScope(ctx.children[0].getText(), 'global.' + self.current_class)
+                element = self.symbol_table.getIdByScope(firstExpr, 'global.' + self.current_class)
                 callerType = element.getCategory()
 
-        cprint(callerType, 'red')
-        cprint(ctx.children[idIndex].getText(), 'red')
+        cprint('CALLER TYPE' + callerType, 'red')
+        cprint('CALLER' + ctx.children[idIndex].getText(), 'red')
 
         bigexprChildCount = int((len(ctx.children) - idIndex - 3) / 2 + 0.5)
         ## Add parameters
