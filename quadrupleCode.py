@@ -33,3 +33,5 @@ class Quadruple(object):
             return self.op + ' class_' + self.result
         elif self.op == 'boolean':
             return self.op + ' ' + self.result
+        elif self.op == 'big':
+            return 'if' + ' ' + self.arg1  + ' goto ' + self.result

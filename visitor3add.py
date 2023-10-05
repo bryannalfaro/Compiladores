@@ -642,6 +642,19 @@ class IntermediateCode(ParseTreeVisitor):
         print('im here bigexpr')
         threeCode = ThreeAddressCode()
         threeCode.addAddress('R')
+        
+        #Evaluar si el padre tiene etiqueta (caso de if)
+        try:
+            trueLabel  = ctx.parentCtx.trueLabel
+            falseLabel = ctx.parentCtx.falseLabel
+        except:
+            trueLabel = None
+            falseLabel = None
+
+        if trueLabel != None and falseLabel != None:
+             threeCode.add(Quadruple('big', None, None, trueLabel))
+             threeCode.add(Quadruple('goto', None, None, falseLabel))
+             return threeCode
 
         idIndex = 4 if ctx.children[1].getText() == '@' else 2
 
