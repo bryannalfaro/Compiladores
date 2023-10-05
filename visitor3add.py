@@ -479,7 +479,6 @@ class IntermediateCode(ParseTreeVisitor):
         right = results[-1]
         threeCode = ThreeAddressCode()
         threeCode.addAddress(self.generate.getTemporal())
-        print('left times', left)
         threeCode.add(left.code)
         threeCode.add(right.code)
         threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, threeCode.address))
@@ -706,21 +705,21 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#bigexpr.
     def visitBigexpr(self, ctx:YAPLParser.BigexprContext):
-        print('im here bigexpr')
+        print('im here bigexpr', ctx.getText())
         threeCode = ThreeAddressCode()
         threeCode.addAddress(self.generate.getTemporal())
         #Evaluar si el padre tiene etiqueta (caso de if)
-        # try:
-        #     trueLabel  = ctx.parentCtx.trueLabel
-        #     falseLabel = ctx.parentCtx.falseLabel
-        # except:
-        #     trueLabel = None
-        #     falseLabel = None
+        try:
+            trueLabel  = ctx.parentCtx.trueLabel
+            falseLabel = ctx.parentCtx.falseLabel
+        except:
+            trueLabel = ''
+            falseLabel = ''
 
-        # if trueLabel != '' and falseLabel != '':
-        #      threeCode.add(Quadruple('big', ctx.getText(), None, trueLabel))
-        #      threeCode.add(Quadruple('goto', None, None, falseLabel))
-        #      return threeCode
+        if trueLabel != '' and falseLabel != '':
+             threeCode.add(Quadruple('big', ctx.getText(), None, trueLabel))
+             threeCode.add(Quadruple('goto', None, None, falseLabel))
+             return threeCode
 
         idIndex = 4 if ctx.children[1].getText() == '@' else 2
         if idIndex == 4:
