@@ -652,7 +652,7 @@ class IntermediateCode(ParseTreeVisitor):
             falseLabel = None
 
         if trueLabel != None and falseLabel != None:
-             threeCode.add(Quadruple('big', None, None, trueLabel))
+             threeCode.add(Quadruple('big', ctx.getText(), None, trueLabel))
              threeCode.add(Quadruple('goto', None, None, falseLabel))
              return threeCode
 
