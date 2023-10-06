@@ -728,8 +728,10 @@ class IntermediateCode(ParseTreeVisitor):
             print('FIRST EXPR', firstExpr, type(firstExpr), type(ctx.children[0]))
             if isinstance(ctx.children[0], YAPLParser.StringContext):
                 callerType = StringType
-            elif isinstance(ctx.children[0], YAPLParser.IntContext):
+            elif isinstance(ctx.children[0], YAPLParser.IntContext) or isinstance(ctx.children[0], YAPLParser.PlusminusContext) or isinstance(ctx.children[0], YAPLParser.TimesdivContext):
                 callerType = IntType
+            elif isinstance(ctx.children[0], YAPLParser.TrueContext) or isinstance(ctx.children[0], YAPLParser.FalseContext) or isinstance(ctx.children[0], YAPLParser.CompareContext or isinstance(ctx.children[0], YAPLParser.IsvoidContext) or isinstance(ctx.children[0], YAPLParser.NotContext)):
+                callerType = BoolType
             elif isinstance(ctx.children[0], YAPLParser.BigexprContext):
                 localid = 4 if ctx.children[0].children[1] == '@' else 2
                 callerType = self.symbol_table.getFunctionType(ctx.children[0].children[idIndex].getText())
