@@ -311,7 +311,6 @@ class IntermediateCode(ParseTreeVisitor):
             fatherTrueLabel = ''
             fatherFalseLabel = ''
             fatherNextLabel = ''
-        self.visitChildren(ctx)
         # Return ID type
         #print("CHILDREN 0 CALL",ctx.children[0].getText())
         callParameterCount = 0 if len(ctx.children) == 3 else int(((len(ctx.children) - 3) / 2) + 0.5)
@@ -727,33 +726,36 @@ class IntermediateCode(ParseTreeVisitor):
         else:
             firstExpr = ctx.children[0].getText()
             print('FIRST EXPR', firstExpr, type(firstExpr), type(ctx.children[0]))
-            if 'new' in firstExpr:
-                callerType = self.getNewtype(firstExpr)
-            elif isinstance(ctx.children[0], YAPLParser.StringContext):
+            if isinstance(ctx.children[0], YAPLParser.StringContext):
                 callerType = StringType
             elif isinstance(ctx.children[0], YAPLParser.IntContext):
-                callerType = IntType   
+                callerType = IntType
+            elif isinstance(ctx.children[0], YAPLParser.BigexprContext):
+                localid = 4 if ctx.children[0].children[1] == '@' else 2
+                callerType = self.symbol_table.getFunctionType(ctx.children[0].children[idIndex].getText())
+            elif 'new' in firstExpr:
+                callerType = self.getNewtype(firstExpr)
             else:
-                    classScope = 'global.' + str(self.current_class)
-                    functionScope = 'global.' + str(self.current_class) + '.' + str(self.current_function)
-                    paramScope = 'local.' + str(self.current_class) + '.' + str(self.current_function)
-                    #Se busca en todos los let
-                    variable = None
-                    counter = self.current_let
-                    while counter >= 0 and variable == None:
-                        letScope = 'local.' + str(self.current_class) + '.' + str(self.current_function) + '.let' + str(counter)
-                        variable = self.symbol_table.getIdByScope(firstExpr, letScope)
-                        counter -= 1
+                classScope = 'global.' + str(self.current_class)
+                functionScope = 'global.' + str(self.current_class) + '.' + str(self.current_function)
+                paramScope = 'local.' + str(self.current_class) + '.' + str(self.current_function)
+                #Se busca en todos los let
+                variable = None
+                counter = self.current_let
+                while counter >= 0 and variable == None:
+                    letScope = 'local.' + str(self.current_class) + '.' + str(self.current_function) + '.let' + str(counter)
+                    variable = self.symbol_table.getIdByScope(firstExpr, letScope)
+                    counter -= 1
+                if variable == None:
+                    print('searchign')
+                    variable = self.symbol_table.getIdByScope(firstExpr, paramScope)
+                    print(variable)
                     if variable == None:
-                        print('searchign')
-                        variable = self.symbol_table.getIdByScope(firstExpr, paramScope)
-                        print(variable)
-                        if variable == None:
-                            variable = self.symbol_table.getIdByScope(firstExpr, functionScope)
-                        if variable == None:
-                            variable= self.symbol_table.getIdByScope(firstExpr, classScope)
-                        
-                    callerType = variable.getCategory()
+                        variable = self.symbol_table.getIdByScope(firstExpr, functionScope)
+                    if variable == None:
+                        variable= self.symbol_table.getIdByScope(firstExpr, classScope)
+                    
+                callerType = variable.getCategory()
 
         cprint('CALLER TYPE' + callerType, 'red')
         cprint('CALLER' + ctx.children[idIndex].getText(), 'red')

@@ -265,6 +265,12 @@ class SymbolTable():
                     variables.append(entry)
         return variables
 
+    def getFunctionType(self, name):
+        for entry in self.table:
+            if entry.type == 'function':
+                if entry.data["name"] == name:
+                    return entry.getCategory()
+
 
     def set(self, name, value):
         self.table[name] = value
