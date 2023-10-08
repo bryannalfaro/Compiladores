@@ -271,6 +271,17 @@ class SymbolTable():
                 if entry.data["name"] == name:
                     return entry.getCategory()
 
+    def getSizeOffsetFunction(self, name, className):
+        for entry in self.table:
+            if entry.type == 'function':
+                if entry.data["name"] == name and entry.data["scope"] == ('global.' + className):
+                    return entry.offset, entry.data["scope"]
+
+        for entry in self.table:
+            if entry.type == 'function':
+                if entry.data["name"] == name:
+                    return entry.offset, entry.data["scope"]
+
 
     def set(self, name, value):
         self.table[name] = value
