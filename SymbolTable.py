@@ -282,6 +282,28 @@ class SymbolTable():
                 if entry.data["name"] == name:
                     return entry.offset, entry.data["scope"]
 
+    def getVariableOffset(self, name, className, functionName = None):
+        print('HEREEE', name, className, functionName)
+        if functionName != None:
+            for entry in self.table:
+                if entry.type == 'variable':
+                    if entry.data["name"] == name and entry.data["scope"].startswith('local.' + className + '.' + functionName):
+                        return entry.offset, entry.data["scope"]
+        else:
+            for entry in self.table:
+                if entry.type == 'variable':
+                    if entry.data["name"] == name and entry.data["scope"] == ('global.' + className):
+                        return entry.offset, entry.data["scope"]
+        
+        for entry in self.table:
+            if entry.type == 'variable':
+                if entry.data["name"] and entry.data["scope"] == ('global.' + className):
+                    return entry.offset, entry.data["scope"]
+        for entry in self.table:
+            if entry.type == 'variable':
+                if entry.data["name"]:
+                    return entry.offset, entry.data["scope"]
+
 
     def set(self, name, value):
         self.table[name] = value

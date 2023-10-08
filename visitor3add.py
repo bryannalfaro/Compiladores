@@ -99,6 +99,7 @@ class IntermediateCode(ParseTreeVisitor):
             threeCode.add(Quadruple('label', None, None, self.nextFatherLabel))
             self.nextFatherLabel = False
         threeCode.add(Quadruple('return', 'function_'+functionName+"_"+self.current_class+f"[{functionType}]", None, None))
+        self.current_function = None
         return threeCode
 
 
@@ -106,11 +107,13 @@ class IntermediateCode(ParseTreeVisitor):
     def visitVariable(self, ctx:YAPLParser.VariableContext):
         variableName = ctx.children[0].getText()
         threeCode = ThreeAddressCode()
+        variableOffset, variableScope = self.symbol_table.getVariableOffset(variableName, self.current_class)
+        variableAddress = variableScope + '[' + str(variableOffset) + ']'
         if len(ctx.children) > 3:
             #visit the children
             childCode = self.visitChildren(ctx)
             threeCode.add(childCode.code)
-            threeCode.add(Quadruple('equal',childCode.address, None, variableName))
+            threeCode.add(Quadruple('equal',childCode.address, None, variableAddress))
             isTemporal = True
             if childCode.address[0] == 't':
                 for i in range(1, len(childCode.address)):
@@ -130,7 +133,7 @@ class IntermediateCode(ParseTreeVisitor):
             else:
                 variableValue = None
             #quadruple
-            quadruple_variable = Quadruple('equal', variableValue, None, variableName)
+            quadruple_variable = Quadruple('equal', variableValue, None, variableAddress)
             threeCode.add(quadruple_variable)
         
         return threeCode
@@ -695,10 +698,19 @@ class IntermediateCode(ParseTreeVisitor):
 
         idValue = ctx.children[0].getText()
         exprType = self.visit(ctx.children[2])
+        variableOffset, variableScope = self.symbol_table.getVariableOffset(idValue, self.current_class, self.current_function)
+        print('ID: ', idValue)
+        print('HEEEEEEEEEEEERE', variableOffset, variableScope)
+
+        if 'local' in variableScope:
+            scopeSplit = variableScope.split('.')
+            variableScope = 'global.' + scopeSplit[1]
+
+        idAddress = variableScope + '[' + str(variableOffset) + ']'
 
         threeCode = ThreeAddressCode()
         threeCode.add(exprType.code)
-        threeCode.add(Quadruple('equal', exprType.address, None, idValue))
+        threeCode.add(Quadruple('equal', exprType.address, None, idAddress))
 
         return threeCode
 
