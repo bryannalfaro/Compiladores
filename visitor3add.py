@@ -466,7 +466,9 @@ class IntermediateCode(ParseTreeVisitor):
         indexOfNew = new.index('new')
         newType = ''
         i = indexOfNew + 3
-        while new[i] != ' ' and new[i] != ')':
+        new = new[i:]
+        i = 0
+        while i<len(new) and new[i] != ' ' and new[i] != ')' :
             newType += new[i]
             i += 1
         return newType
@@ -746,9 +748,24 @@ class IntermediateCode(ParseTreeVisitor):
                 callerType = BoolType
             elif isinstance(ctx.children[0], YAPLParser.BigexprContext):
                 localid = 4 if ctx.children[0].children[1] == '@' else 2
+                b = self.visit(ctx.children[0])
+                threeCode.add(b.code)
                 callerType = self.symbol_table.getFunctionType(ctx.children[0].children[idIndex].getText())
             elif 'new' in firstExpr:
                 callerType = self.getNewtype(firstExpr)
+            elif 'isvoid' in firstExpr:
+                callerType = BoolType
+
+            # elif isinstance(ctx.children[0], YAPLParser.NewtypeContext):
+            #     print('entering new', firstExpr)
+            #     callerType = self.getNewtype(firstExpr)
+            # elif isinstance(ctx.children[0], YAPLParser.ParenContext):
+            #     print('entering paren', firstExpr)
+            #     if 'new' in firstExpr:
+            #      callerType = self.getNewtype(firstExpr)
+            #     else:
+            #         self.visit(ctx.children[1])
+            
             else:
                 classScope = 'global.' + str(self.current_class)
                 functionScope = 'global.' + str(self.current_class) + '.' + str(self.current_function)
