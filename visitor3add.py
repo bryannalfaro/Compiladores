@@ -343,8 +343,8 @@ class IntermediateCode(ParseTreeVisitor):
             element = self.visit(ctx.children[2*i+2])
             threeCode.add(element.code)
             threeCode.add(Quadruple('PARAMETER', None, None, element.address))
-            if element.address[0] == 't' and element.address[1:].isnumeric():
-                self.generate.makeTemporalAvailable(element.address)
+            # if element.address[0] == 't' and element.address[1:].isnumeric():
+            #     self.generate.makeTemporalAvailable(element.address)
 
         while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
             parentCheck = self.symbol_table.getClassParent(parentCheck)
@@ -826,8 +826,8 @@ class IntermediateCode(ParseTreeVisitor):
             element = self.visit(ctx.children[i])
             threeCode.add(element.code)
             threeCode.add(Quadruple('PARAMETER', None, None, element.address))
-            if element.address[0] == 't' and element.address[1:].isnumeric():
-                self.generate.makeTemporalAvailable(element.address)
+            # if element.address[0] == 't' and element.address[1:].isnumeric():
+            #     self.generate.makeTemporalAvailable(element.address)
         # Return ID type
         #print('CHECKING', callerType, ctx.children[idIndex].getText())
         existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
