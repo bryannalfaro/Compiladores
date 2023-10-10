@@ -5,7 +5,7 @@ class A {
 
    set_var(num : Int) : SELF_TYPE {
       {
-         var <- num;
+         -- var <- num;
          self;
       }
    };

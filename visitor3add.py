@@ -173,15 +173,17 @@ class IntermediateCode(ParseTreeVisitor):
     def visitPlusminus(self, ctx:YAPLParser.PlusminusContext):
         results = []
         for times_node in ctx.expr():
+            print('TIMESNODE', type(times_node))
             results.append(self.visit(times_node))
         left = results[0]
         right = results[-1]
         threeCode = ThreeAddressCode()
-        threeCode.addAddress(self.generate.getTemporal())
+        generate  = self.generate.getTemporal()
+        threeCode.addAddress(generate)
         threeCode.add(left.code)
         threeCode.add(right.code)
+        print('LEFTRIGHT', type(left), type(right), left.address, right.address, threeCode.address)
         threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, threeCode.address))
-
         return threeCode
 
     # Visit a parse tree produced by YAPLParser#negation.
@@ -214,9 +216,13 @@ class IntermediateCode(ParseTreeVisitor):
             if index == 0:
                 continue
             elif index != len(ctx.children) - 3:
-                if self.visit(child) is not None:
-                    expr = self.visit(child)
-                    threeCode.add(expr.code)
+                print('SEARCHINGTYPE', type(child))
+                a = self.visit(child)
+                if a is not None:
+                    #expr = self.visit(child)
+                   
+                    threeCode.add(a.code)
+                    print('a')
             else:
                 last = self.visit(child)
                 cprint(last,'green')
@@ -585,12 +591,15 @@ class IntermediateCode(ParseTreeVisitor):
                 
                 #print("SI ENTRO")
                 #sizes
+                variableOffset = self.symbol_table.getLetParamOffset(variableName, self.current_function, self.current_let)
+                print('VARIABLE OFFSET', variableOffset)
+                variableName  = "global." + self.current_class + '[' + str(variableOffset) + ']'
                 if variableType in self.defaultValues and variableType != StringType:
-                    threeCode.add(Quadruple('equal',variableValue, None, variableName+str(self.current_let)))
+                    threeCode.add(Quadruple('equal',variableValue, None, variableName))
                 elif variableType == StringType:
-                    threeCode.add(Quadruple('equal',variableValue, None, variableName+str(self.current_let)))
+                    threeCode.add(Quadruple('equal',variableValue, None, variableName))
                 else:
-                    threeCode.add(Quadruple('equal',variableValue, None, variableName+str(self.current_let)))
+                    threeCode.add(Quadruple('equal',variableValue, None, variableName))
                 variableName = None
                 variableType = None
                 variableValue = None
@@ -606,7 +615,8 @@ class IntermediateCode(ParseTreeVisitor):
                 continue
             else:
                 if index != len(ctx.children) - 1:
-                    variableValue = self.visit(child)
+                    variableValue = self.visit(child).address
+                    #print('VARIABLE VALUE', variableValue.address)
                 else:
                     self.current_let += 1
                     cprint("CURRENT LET", 'red')
@@ -634,7 +644,7 @@ class IntermediateCode(ParseTreeVisitor):
                 letScope = 'local.' + str(self.current_class) + '.' + str(self.current_function) + '.let' + str(counter)
                 variable = self.symbol_table.getIdByScope(ctx.getText(), letScope)
                 counter -= 1
-            generatedTemp = self.generate.getTemporal()
+            # generatedTemp = self.generate.getTemporal()
             if variable == None:
                 variable = self.symbol_table.getIdByScope(ctx.getText(), paramScope)
 
@@ -653,8 +663,14 @@ class IntermediateCode(ParseTreeVisitor):
                     self.visitChildren(ctx)
                     return ErrorType
             else:
-                threeCode.add(Quadruple('equal',variable.data['value'], None,  generatedTemp))
-                threeCode.addAddress(generatedTemp)
+                variableScope = variable.data['scope']
+                if 'local' in variable.data['scope']:
+                 scopeSplit = variable.data['scope'].split('.')
+                 variableScope = 'global.' + scopeSplit[1]
+
+                variableAddress = variableScope + '[' + str(variable.offset) + ']'
+                threeCode.add(Quadruple('equal',variable.data['value'], None,  variableAddress))
+                threeCode.addAddress(variableAddress)
                 return  threeCode
 
     
@@ -700,6 +716,7 @@ class IntermediateCode(ParseTreeVisitor):
 
         idValue = ctx.children[0].getText()
         exprType = self.visit(ctx.children[2])
+        print('TYPE CHILDREn', type(ctx.children[2]), exprType.address)
         variableOffset, variableScope = self.symbol_table.getVariableOffset(idValue, self.current_class, self.current_function)
         print('ID: ', idValue)
         print('HEEEEEEEEEEEERE', variableOffset, variableScope)
@@ -712,7 +729,12 @@ class IntermediateCode(ParseTreeVisitor):
 
         threeCode = ThreeAddressCode()
         threeCode.add(exprType.code)
+        print('ead', exprType.address, idAddress)
         threeCode.add(Quadruple('equal', exprType.address, None, idAddress))
+        
+        for i in threeCode.code:
+            print(i)
+        
 
         return threeCode
 

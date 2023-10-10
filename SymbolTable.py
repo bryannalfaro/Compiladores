@@ -308,6 +308,17 @@ class SymbolTable():
     def set(self, name, value):
         self.table[name] = value
 
+    def getLetParamOffset(self, name, functionName, let):
+        for entry in self.table:
+            if entry.type == 'variable':
+                if entry.data["name"] == name and 'let' in entry.data["scope"] and functionName in entry.data["scope"]:
+                    letNum = int(entry.data["scope"].split('let')[1])
+                    if letNum >= let:
+                        return entry.offset
+                    
+    
+                   
+
     def __str__(self):
         return str(self.table)
     
