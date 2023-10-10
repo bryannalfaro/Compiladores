@@ -779,7 +779,7 @@ class IntermediateCode(ParseTreeVisitor):
                 localid = 4 if ctx.children[0].children[1] == '@' else 2
                 b = self.visit(ctx.children[0])
                 threeCode.add(b.code)
-                callerType = self.symbol_table.getFunctionType(ctx.children[0].children[idIndex].getText())
+                callerType = self.symbol_table.getFunctionType(ctx.children[0].children[localid].getText())
             elif 'new' in firstExpr:
                 callerType = self.getNewtype(firstExpr)
             elif 'isvoid' in firstExpr:
@@ -823,9 +823,15 @@ class IntermediateCode(ParseTreeVisitor):
         bigexprChildCount = int((len(ctx.children) - idIndex - 3) / 2 + 0.5)
         ## Add parameters
         for i in range(idIndex + 2, len(ctx.children) - 1, 2):
-            element = self.visit(ctx.children[i])
-            threeCode.add(element.code)
-            threeCode.add(Quadruple('PARAMETER', None, None, element.address))
+            if isinstance(ctx.children[i], YAPLParser.IdContext):
+                element = self.visit(ctx.children[i])
+                threeCode.add(Quadruple('PARAMETER', None, None, element.address))
+            else:
+                element = self.visit(ctx.children[i])
+                threeCode.add(element.code)
+                threeCode.add(Quadruple('PARAMETER', None, None, element.address))
+            for ij in threeCode.code:
+                cprint(ij, 'red')
             # if element.address[0] == 't' and element.address[1:].isnumeric():
             #     self.generate.makeTemporalAvailable(element.address)
         # Return ID type
