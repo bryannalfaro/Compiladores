@@ -61,6 +61,7 @@ class IntermediateCode(ParseTreeVisitor):
             res = self.visit(child)
             if res != None:
                 threeCode.add(res.code)
+        self.generate.resetTemporal()
         return threeCode
 
     # Visit a parse tree produced by YAPLParser#function.
@@ -216,7 +217,7 @@ class IntermediateCode(ParseTreeVisitor):
             if index == 0:
                 continue
             elif index != len(ctx.children) - 3:
-                print('SEARCHINGTYPE', type(child))
+                print('CHILD: ', child.getText())
                 a = self.visit(child)
                 if a is not None:
                     #expr = self.visit(child)
@@ -224,6 +225,7 @@ class IntermediateCode(ParseTreeVisitor):
                     threeCode.add(a.code)
                     print('a')
             else:
+                print('LAST CHILD: ', child.getText(), type(child))
                 last = self.visit(child)
                 cprint(last,'green')
                 threeCode.add(last.code)
@@ -341,6 +343,8 @@ class IntermediateCode(ParseTreeVisitor):
             element = self.visit(ctx.children[2*i+2])
             threeCode.add(element.code)
             threeCode.add(Quadruple('PARAMETER', None, None, element.address))
+            if element.address[0] == 't' and element.address[1:].isnumeric():
+                self.generate.makeTemporalAvailable(element.address)
 
         while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
             parentCheck = self.symbol_table.getClassParent(parentCheck)
@@ -614,13 +618,14 @@ class IntermediateCode(ParseTreeVisitor):
                 #print("TERMINAL NODE",child.getText())
                 continue
             else:
+                print('AAAAAAAAAAAAAAAH', child.getText())
                 if index != len(ctx.children) - 1:
                     variableValue = self.visit(child).address
                     #print('VARIABLE VALUE', variableValue.address)
                 else:
                     self.current_let += 1
                     cprint("CURRENT LET", 'red')
-                    threeCode.code = self.visit(child).code
+                    threeCode.add(self.visit(child).code)
         return threeCode
     # Visit a parse tree produced by YAPLParser#id.
     def visitId(self, ctx:YAPLParser.IdContext):
@@ -729,11 +734,13 @@ class IntermediateCode(ParseTreeVisitor):
 
         threeCode = ThreeAddressCode()
         threeCode.add(exprType.code)
-        print('ead', exprType.address, idAddress)
         threeCode.add(Quadruple('equal', exprType.address, None, idAddress))
         
         for i in threeCode.code:
             print(i)
+
+        if exprType.address[0] == 't' and exprType.address[1:].isnumeric():
+            self.generate.makeTemporalAvailable(exprType.address)
         
 
         return threeCode
@@ -819,6 +826,8 @@ class IntermediateCode(ParseTreeVisitor):
             element = self.visit(ctx.children[i])
             threeCode.add(element.code)
             threeCode.add(Quadruple('PARAMETER', None, None, element.address))
+            if element.address[0] == 't' and element.address[1:].isnumeric():
+                self.generate.makeTemporalAvailable(element.address)
         # Return ID type
         #print('CHECKING', callerType, ctx.children[idIndex].getText())
         existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)

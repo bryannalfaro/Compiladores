@@ -97,6 +97,9 @@ class Generator():
         beginLabel = "begin" + str(self.counterBegin)
         self.counterBegin += 1
         return beginLabel
+
+    def resetTemporal(self):
+        self.tempCounters = 0
     
     
     def __str__(self):
