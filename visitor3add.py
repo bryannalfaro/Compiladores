@@ -594,10 +594,10 @@ class IntermediateCode(ParseTreeVisitor):
         for index, child in enumerate(ctx.children):
             #print("INSIDE FOR")
             if child.getText() == ',' or child.getText() == 'IN' or child.getText() == 'in':
-                if variableType in self.defaultValues:
+                if variableType in self.defaultValues and variableValue== None:
                     variableValue = self.defaultValues[variableType]['value']
-                else:
-                    variableValue = None
+                # else:
+                #     variableValue = None
                 
                 #print("SI ENTRO")
                 #sizes
