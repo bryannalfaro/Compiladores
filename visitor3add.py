@@ -66,6 +66,9 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#function.
     def visitFunction(self, ctx:YAPLParser.FunctionContext):
+        temporal = self.generate.getTemporal()
+        self.generate.setLowestTemporal(temporal)
+        self.generate.makeTemporalAvailable(temporal)
         functionName = ctx.children[0].getText()
         self.current_function = functionName
         self.local_offset = self.global_offset
@@ -81,8 +84,6 @@ class IntermediateCode(ParseTreeVisitor):
                 # Visiting all attributes (Formal)
                 attributes.append(self.visit(ctx.children[i]))
 
-
-    
         functionName = ctx.children[0].getText()
         threeCode = ThreeAddressCode()
 
@@ -101,6 +102,7 @@ class IntermediateCode(ParseTreeVisitor):
             self.nextFatherLabel = False
         threeCode.add(Quadruple('return', 'function_'+functionName+"_"+self.current_class+f"[{functionType}]", None, None))
         self.current_function = None
+        self.generate.resetLowestTemporal()
         return threeCode
 
 
@@ -183,6 +185,10 @@ class IntermediateCode(ParseTreeVisitor):
         threeCode.addAddress(generate)
         threeCode.add(left.code)
         threeCode.add(right.code)
+        for i in left.code:
+            print(i)
+        for j in right.code:
+            print(j)
         print('LEFTRIGHT', type(left), type(right), left.address, right.address, threeCode.address)
         threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, threeCode.address))
         return threeCode
@@ -625,7 +631,10 @@ class IntermediateCode(ParseTreeVisitor):
                 else:
                     self.current_let += 1
                     cprint("CURRENT LET", 'red')
-                    threeCode.add(self.visit(child).code)
+                    visi = self.visit(child).code
+                    for i in visi:
+                        cprint(i, 'blue')
+                    threeCode.add(visi)
         return threeCode
     # Visit a parse tree produced by YAPLParser#id.
     def visitId(self, ctx:YAPLParser.IdContext):
@@ -674,7 +683,7 @@ class IntermediateCode(ParseTreeVisitor):
                  variableScope = 'global.' + scopeSplit[1]
 
                 variableAddress = variableScope + '[' + str(variable.offset) + ']'
-                threeCode.add(Quadruple('equal',variable.data['value'], None,  variableAddress))
+                #threeCode.add(Quadruple('equal',variable.data['value'], None,  variableAddress))
                 threeCode.addAddress(variableAddress)
                 return  threeCode
 
@@ -731,7 +740,8 @@ class IntermediateCode(ParseTreeVisitor):
             variableScope = 'global.' + scopeSplit[1]
 
         idAddress = variableScope + '[' + str(variableOffset) + ']'
-
+        for i in exprType.code:
+            print(i)
         threeCode = ThreeAddressCode()
         threeCode.add(exprType.code)
         threeCode.add(Quadruple('equal', exprType.address, None, idAddress))

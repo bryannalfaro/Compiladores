@@ -39,6 +39,7 @@ class Generator():
         self.counterNext=0
         self.counterBegin = 0
         self.counterWhile = 0
+        self.lowestTemporal = 0
     
     
     def getTemporal(self):
@@ -100,6 +101,13 @@ class Generator():
 
     def resetTemporal(self):
         self.tempCounters = 0
+
+    def setLowestTemporal(self, lowestTemporal):
+        self.lowestTemporal = int(lowestTemporal[1:])
+    
+    def resetLowestTemporal(self):
+        self.tempCounters = self.lowestTemporal
+    
     
     
     def __str__(self):
