@@ -283,7 +283,7 @@ class SymbolTable():
                     return entry.offset, entry.data["scope"]
 
     def getVariableOffset(self, name, className, functionName = None):
-        print('HEREEE', name, className, functionName)
+        #print('HEREEE', name, className, functionName)
         if functionName != None:
             for entry in self.table:
                 if entry.type == 'variable':

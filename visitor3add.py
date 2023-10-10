@@ -176,7 +176,7 @@ class IntermediateCode(ParseTreeVisitor):
     def visitPlusminus(self, ctx:YAPLParser.PlusminusContext):
         results = []
         for times_node in ctx.expr():
-            print('TIMESNODE', type(times_node))
+            #print('TIMESNODE', type(times_node))
             results.append(self.visit(times_node))
         left = results[0]
         right = results[-1]
@@ -185,11 +185,11 @@ class IntermediateCode(ParseTreeVisitor):
         threeCode.addAddress(generate)
         threeCode.add(left.code)
         threeCode.add(right.code)
-        for i in left.code:
-            print(i)
-        for j in right.code:
-            print(j)
-        print('LEFTRIGHT', type(left), type(right), left.address, right.address, threeCode.address)
+        # for i in left.code:
+        #     print(i)
+        # for j in right.code:
+        #     print(j)
+        # print('LEFTRIGHT', type(left), type(right), left.address, right.address, threeCode.address)
         threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, threeCode.address))
         return threeCode
 
@@ -205,7 +205,7 @@ class IntermediateCode(ParseTreeVisitor):
         
     # Visit a parse tree produced by YAPLParser#curly.
     def visitCurly(self, ctx:YAPLParser.CurlyContext):
-        print('im here curly')
+        #print('im here curly')
 
         '''
         threeCode = ThreeAddressCode()
@@ -223,17 +223,17 @@ class IntermediateCode(ParseTreeVisitor):
             if index == 0:
                 continue
             elif index != len(ctx.children) - 3:
-                print('CHILD: ', child.getText())
+                #print('CHILD: ', child.getText())
                 a = self.visit(child)
                 if a is not None:
                     #expr = self.visit(child)
                    
                     threeCode.add(a.code)
-                    print('a')
+                    #print('a')
             else:
-                print('LAST CHILD: ', child.getText(), type(child))
+                #print('LAST CHILD: ', child.getText(), type(child))
                 last = self.visit(child)
-                cprint(last,'green')
+                #cprint(last,'green')
                 threeCode.add(last.code)
                 threeCode.addAddress(last.address)
                 return threeCode
@@ -248,7 +248,7 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#isvoid.
     def visitIsvoid(self, ctx:YAPLParser.IsvoidContext):
-        print('im here ')
+        #print('im here ')
         self.visitChildren(ctx)
         # Return bool evaluates to true if expr is void 
         # and evaluates to false if expr is not void.
@@ -291,7 +291,7 @@ class IntermediateCode(ParseTreeVisitor):
             ctx.falseLabel = fatherFalseLabel
             
 
-        print('false' , fatherFalseLabel)
+        #print('false' , fatherFalseLabel)
         nextLabel = fatherBeginLabel
         ctx.nextLabel = nextLabel
         
@@ -302,7 +302,7 @@ class IntermediateCode(ParseTreeVisitor):
         whileType = self.visit(ctx.children[3])
         threeCode.add(whileType.code)
         threeCode.add(Quadruple('goto', None, None, fatherBeginLabel))
-        print(self.fatherFalseLabel)
+        #print(self.fatherFalseLabel)
         threeCode.add(Quadruple('label', None, None, fatherFalseLabel))
        
         return threeCode
@@ -318,7 +318,7 @@ class IntermediateCode(ParseTreeVisitor):
     # Visit a parse tree produced by YAPLParser#call.
     def visitCall(self, ctx:YAPLParser.CallContext):
         # print('im here ')
-        print("CALL")
+        #print("CALL")
         #Se ve si proviene de un if para agregar un texto distinto
         try:
             fatherTrueLabel = ctx.parentCtx.trueLabel
@@ -602,7 +602,7 @@ class IntermediateCode(ParseTreeVisitor):
                 #print("SI ENTRO")
                 #sizes
                 variableOffset = self.symbol_table.getLetParamOffset(variableName, self.current_function, self.current_let)
-                print('VARIABLE OFFSET', variableOffset)
+                #print('VARIABLE OFFSET', variableOffset)
                 variableName  = "global." + self.current_class + '[' + str(variableOffset) + ']'
                 if variableType in self.defaultValues and variableType != StringType:
                     threeCode.add(Quadruple('equal',variableValue, None, variableName))
@@ -624,22 +624,22 @@ class IntermediateCode(ParseTreeVisitor):
                 #print("TERMINAL NODE",child.getText())
                 continue
             else:
-                print('AAAAAAAAAAAAAAAH', child.getText())
+                #print('AAAAAAAAAAAAAAAH', child.getText())
                 if index != len(ctx.children) - 1:
                     variableValue = self.visit(child).address
                     #print('VARIABLE VALUE', variableValue.address)
                 else:
                     self.current_let += 1
-                    cprint("CURRENT LET", 'red')
+                    #cprint("CURRENT LET", 'red')
                     visi = self.visit(child).code
-                    for i in visi:
-                        cprint(i, 'blue')
+                    # for i in visi:
+                    #     cprint(i, 'blue')
                     threeCode.add(visi)
         return threeCode
     # Visit a parse tree produced by YAPLParser#id.
     def visitId(self, ctx:YAPLParser.IdContext):
         threeCode = ThreeAddressCode()
-        cprint(ctx.getText(),'blue')
+        #cprint(ctx.getText(),'blue')
         if ctx.getText() == 'self': #si es self
             threeCode.add(Quadruple('equal', 'self', None, 'self'))
             threeCode.addAddress('self')
@@ -730,24 +730,24 @@ class IntermediateCode(ParseTreeVisitor):
 
         idValue = ctx.children[0].getText()
         exprType = self.visit(ctx.children[2])
-        print('TYPE CHILDREn', type(ctx.children[2]), exprType.address)
+        #print('TYPE CHILDREn', type(ctx.children[2]), exprType.address)
         variableOffset, variableScope = self.symbol_table.getVariableOffset(idValue, self.current_class, self.current_function)
-        print('ID: ', idValue)
-        print('HEEEEEEEEEEEERE', variableOffset, variableScope)
+        #print('ID: ', idValue)
+        #print('HEEEEEEEEEEEERE', variableOffset, variableScope)
 
         if 'local' in variableScope:
             scopeSplit = variableScope.split('.')
             variableScope = 'global.' + scopeSplit[1]
 
         idAddress = variableScope + '[' + str(variableOffset) + ']'
-        for i in exprType.code:
-            print(i)
+        # for i in exprType.code:
+        #     print(i)
         threeCode = ThreeAddressCode()
         threeCode.add(exprType.code)
         threeCode.add(Quadruple('equal', exprType.address, None, idAddress))
         
-        for i in threeCode.code:
-            print(i)
+        # for i in threeCode.code:
+        #     print(i)
 
         if exprType.address[0] == 't' and exprType.address[1:].isnumeric():
             self.generate.makeTemporalAvailable(exprType.address)
@@ -757,7 +757,7 @@ class IntermediateCode(ParseTreeVisitor):
 
     # Visit a parse tree produced by YAPLParser#bigexpr.
     def visitBigexpr(self, ctx:YAPLParser.BigexprContext):
-        print('im here bigexpr', ctx.getText())
+        #print('im here bigexpr', ctx.getText())
         threeCode = ThreeAddressCode()
         #threeCode.addAddress(self.generate.getTemporal())
         #Evaluar si el padre tiene etiqueta (caso de if)
@@ -778,7 +778,7 @@ class IntermediateCode(ParseTreeVisitor):
             callerType = ctx.children[2].getText()
         else:
             firstExpr = ctx.children[0].getText()
-            print('FIRST EXPR', firstExpr, type(firstExpr), type(ctx.children[0]))
+            #print('FIRST EXPR', firstExpr, type(firstExpr), type(ctx.children[0]))
             if isinstance(ctx.children[0], YAPLParser.StringContext):
                 callerType = StringType
             elif isinstance(ctx.children[0], YAPLParser.IntContext) or isinstance(ctx.children[0], YAPLParser.PlusminusContext) or isinstance(ctx.children[0], YAPLParser.TimesdivContext):
@@ -817,9 +817,9 @@ class IntermediateCode(ParseTreeVisitor):
                     variable = self.symbol_table.getIdByScope(firstExpr, letScope)
                     counter -= 1
                 if variable == None:
-                    print('searchign')
+                    #print('searchign')
                     variable = self.symbol_table.getIdByScope(firstExpr, paramScope)
-                    print(variable)
+                    #print(variable)
                     if variable == None:
                         variable = self.symbol_table.getIdByScope(firstExpr, functionScope)
                     if variable == None:
@@ -827,8 +827,8 @@ class IntermediateCode(ParseTreeVisitor):
                     
                 callerType = variable.getCategory()
 
-        cprint('CALLER TYPE' + callerType, 'red')
-        cprint('CALLER' + ctx.children[idIndex].getText(), 'red')
+        #cprint('CALLER TYPE' + callerType, 'red')
+        #cprint('CALLER' + ctx.children[idIndex].getText(), 'red')
 
         bigexprChildCount = int((len(ctx.children) - idIndex - 3) / 2 + 0.5)
         ## Add parameters
@@ -840,8 +840,8 @@ class IntermediateCode(ParseTreeVisitor):
                 element = self.visit(ctx.children[i])
                 threeCode.add(element.code)
                 threeCode.add(Quadruple('PARAMETER', None, None, element.address))
-            for ij in threeCode.code:
-                cprint(ij, 'red')
+            # for ij in threeCode.code:
+            #     cprint(ij, 'red')
             # if element.address[0] == 't' and element.address[1:].isnumeric():
             #     self.generate.makeTemporalAvailable(element.address)
         # Return ID type
@@ -883,7 +883,7 @@ class IntermediateCode(ParseTreeVisitor):
             #self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[idIndex].getText()+" in dispatch on " + self.visit(ctx.children[idIndex])))
             self.errors_list.append(MyErrorVisitor(ctx, "Type-Check: unkonwn method "+ctx.children[idIndex].getText()+" in dispatch on " +self.current_class))
             #self.visitChildren(ctx)
-            print('soy yo')
+            #print('soy yo')
             return ErrorType
         else:
             bigExprType = self.symbol_table.getCategoryScope(ctx.children[idIndex].getText(), 'global.' + parentCheck)
