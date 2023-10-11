@@ -297,11 +297,11 @@ class SymbolTable():
         
         for entry in self.table:
             if entry.type == 'variable':
-                if entry.data["name"] and entry.data["scope"] == ('global.' + className):
+                if entry.data["name"]==name and entry.data["scope"] == ('global.' + className):
                     return entry.offset, entry.data["scope"]
         for entry in self.table:
             if entry.type == 'variable':
-                if entry.data["name"]:
+                if entry.data["name"]==name:
                     return entry.offset, entry.data["scope"]
 
 
