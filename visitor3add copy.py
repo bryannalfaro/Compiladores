@@ -182,6 +182,8 @@ class IntermediateCode(ParseTreeVisitor):
         right = results[-1]
         threeCode = ThreeAddressCode()
         generate  = self.generate.getTemporal()
+        self.generate.makeTemporalAvailable(generate)
+        self.generate.setLowestTemporal(generate)
         threeCode.addAddress(generate)
         threeCode.add(left.code)
         threeCode.add(right.code)
@@ -191,6 +193,7 @@ class IntermediateCode(ParseTreeVisitor):
         #     print(j)
         # print('LEFTRIGHT', type(left), type(right), left.address, right.address, threeCode.address)
         threeCode.add(Quadruple(ctx.children[1].getText(), left.address, right.address, threeCode.address))
+        self.generate.resetLowestTemporal()
         return threeCode
 
     # Visit a parse tree produced by YAPLParser#negation.
@@ -223,12 +226,21 @@ class IntermediateCode(ParseTreeVisitor):
             if index == 0:
                 continue
             elif index != len(ctx.children) - 3:
-                #print('CHILD: ', child.getText())
+                
                 a = self.visit(child)
                 if a is not None:
                     #expr = self.visit(child)
                    
                     threeCode.add(a.code)
+                    #if is instance of call , clean temporals
+                    if isinstance(child, YAPLParser.CallContext):
+                        #if it is temporal resetLowestTemporal
+                        if a.address[0] == 't':
+                            self.generate.resetLowestTemporal()
+                        #if it is not temporal, resetLowestTemporal
+                       
+
+
                     #print('a')
             else:
                 #print('LAST CHILD: ', child.getText(), type(child))
@@ -367,6 +379,8 @@ class IntermediateCode(ParseTreeVisitor):
                 if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + self.current_class)):
                     threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionCall))
                     responseTemporal = self.generate.getTemporal()
+                    self.generate.setLowestTemporal(responseTemporal)
+                    self.generate.makeTemporalAvailable(responseTemporal)
                     threeCode.addAddress(responseTemporal)
                     threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                     if fatherTrueLabel != '':
@@ -386,6 +400,8 @@ class IntermediateCode(ParseTreeVisitor):
                     if callType == None:
                         threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionCall))
                         responseTemporal = self.generate.getTemporal()
+                        self.generate.setLowestTemporal(responseTemporal)
+                        self.generate.makeTemporalAvailable(responseTemporal)
                         threeCode.add(Quadruple('equal', responseTemporal, None, 'R'))
                         if fatherTrueLabel != '':
                          threeCode.add(Quadruple('big', responseTemporal, None, fatherTrueLabel))
@@ -394,6 +410,8 @@ class IntermediateCode(ParseTreeVisitor):
                         return threeCode
                     threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionCall))
                     responseTemporal = self.generate.getTemporal()
+                    self.generate.setLowestTemporal(responseTemporal)
+                    self.generate.makeTemporalAvailable(responseTemporal)
                     threeCode.addAddress(responseTemporal)
                     threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                     if fatherTrueLabel != '':
@@ -419,15 +437,14 @@ class IntermediateCode(ParseTreeVisitor):
             if ioCallType != None:
                 threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionCall))
                 responseTemporal = self.generate.getTemporal()
-                self.generate.makeTemporalAvailable(responseTemporal)
                 self.generate.setLowestTemporal(responseTemporal)
+                self.generate.makeTemporalAvailable(responseTemporal)
                 threeCode.addAddress(responseTemporal)
                 threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                 if fatherTrueLabel != '':
                          threeCode.add(Quadruple('big', responseTemporal, None, fatherTrueLabel))
                 if fatherFalseLabel != '':
                         threeCode.add(Quadruple('goto', None, None, fatherFalseLabel))
-                self.generate.resetLowestTemporal()
                 return threeCode
             if callType == None:
                 #print("SEARCHING FUNCTION TABLE")
@@ -436,6 +453,8 @@ class IntermediateCode(ParseTreeVisitor):
                     if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
                         threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionCall))
                         responseTemporal = self.generate.getTemporal()
+                        self.generate.setLowestTemporal(responseTemporal)
+                        self.generate.makeTemporalAvailable(responseTemporal)
                         threeCode.addAddress(responseTemporal)
                         threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                         if fatherTrueLabel != '':
@@ -450,6 +469,8 @@ class IntermediateCode(ParseTreeVisitor):
                     if (callParameterCount == self.function_table.getFunctionAttrCount(ctx.children[0].getText(), 'global.' + funcParentCheck)):
                         threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionCall))
                         responseTemporal = self.generate.getTemporal()
+                        self.generate.setLowestTemporal(responseTemporal)
+                        self.generate.makeTemporalAvailable(responseTemporal)
                         threeCode.addAddress(responseTemporal)
                         threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
                         if fatherTrueLabel != '':
@@ -462,6 +483,8 @@ class IntermediateCode(ParseTreeVisitor):
                         return ErrorType
             threeCode.add(Quadruple('CALL', str(callParameterCount), None, functionCall))
             responseTemporal = self.generate.getTemporal()
+            self.generate.setLowestTemporal(responseTemporal)
+            self.generate.makeTemporalAvailable(responseTemporal)
             threeCode.addAddress(responseTemporal)
             threeCode.add(Quadruple('equal', 'R', None, responseTemporal))
             if fatherTrueLabel != '':
