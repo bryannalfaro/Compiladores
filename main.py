@@ -9,6 +9,7 @@ from antlr4.tree.Trees import Trees
 from listenerError import MyErrorListener
 from termcolor import cprint
 from customLex import CustomLexer
+from mipsGenerator import MipsGenerator
 
 
 
@@ -64,6 +65,12 @@ def evaluate_expression(input_str):
             code  = intermediate.visit(tree)
             for line in code:
                 print(line)
+            cprint("ASSEMBLY MIPS","green")
+            mipsCode = MipsGenerator(code)
+            mipsCode.generate()
+            print(mipsCode)
+
+
         else:
             cprint("No type errors found","green")
             #print the symbol table
@@ -92,6 +99,12 @@ def evaluate_expression(input_str):
             code  = intermediate.visit(tree)
             for line in code:
                 print(line)
+            cprint("ASSEMBLY MIPS","green")
+            mipsCode = MipsGenerator(code)
+            mipsCode.generate()
+            print(mipsCode)
+
+
         return None
 
 
