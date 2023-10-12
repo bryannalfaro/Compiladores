@@ -315,6 +315,12 @@ class SymbolTable():
                     letNum = int(entry.data["scope"].split('let')[1])
                     if letNum >= let:
                         return entry.offset
+
+    def getFunctionOffset(self, name, className):
+        for entry in self.table:
+            if entry.type == 'function':
+                if entry.data['name'] == name and entry.data['scope'] ==  ('global.' + className):
+                    return entry.offset
                     
     
                    

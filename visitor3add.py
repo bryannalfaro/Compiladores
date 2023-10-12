@@ -349,8 +349,8 @@ class IntermediateCode(ParseTreeVisitor):
             element = self.visit(ctx.children[2*i+2])
             threeCode.add(element.code)
             threeCode.add(Quadruple('PARAMETER', None, None, element.address))
-            # if element.address[0] == 't' and element.address[1:].isnumeric():
-            #     self.generate.makeTemporalAvailable(element.address)
+            if element.address[0] == 't' and element.address[1:].isnumeric():
+                self.generate.makeTemporalAvailable(element.address)
 
         while existenceMethod == False and parentCheck != ObjectType and parentCheck!= None:
             parentCheck = self.symbol_table.getClassParent(parentCheck)
@@ -606,7 +606,8 @@ class IntermediateCode(ParseTreeVisitor):
                 #sizes
                 variableOffset = self.symbol_table.getLetParamOffset(variableName, self.current_function, self.current_let)
                 #print('VARIABLE OFFSET', variableOffset)
-                variableName  = "global." + self.current_class + '[' + str(variableOffset) + ']'
+                functionOffset = self.symbol_table.getFunctionOffset(self.current_function, self.current_class)
+                variableName  = "local." + self.current_function + '[' + str(variableOffset - functionOffset) + ']'
                 if variableType in self.defaultValues and variableType != StringType:
                     threeCode.add(Quadruple('equal',variableValue, None, variableName))
                 elif variableType == StringType:
@@ -681,11 +682,14 @@ class IntermediateCode(ParseTreeVisitor):
                     return ErrorType
             else:
                 variableScope = variable.data['scope']
+                functionOffset = 0
                 if 'local' in variable.data['scope']:
+                 
                  scopeSplit = variable.data['scope'].split('.')
-                 variableScope = 'global.' + scopeSplit[1]
+                 functionOffset = self.symbol_table.getFunctionOffset(scopeSplit[2], scopeSplit[1])
+                 variableScope = 'local.' + scopeSplit[2]
 
-                variableAddress = variableScope + '[' + str(variable.offset) + ']'
+                variableAddress = variableScope + '[' + str(variable.offset - functionOffset) + ']'
                 #threeCode.add(Quadruple('equal',variable.data['value'], None,  variableAddress))
                 threeCode.addAddress(variableAddress)
                 return  threeCode
@@ -737,12 +741,13 @@ class IntermediateCode(ParseTreeVisitor):
         variableOffset, variableScope = self.symbol_table.getVariableOffset(idValue, self.current_class, self.current_function)
         #print('ID: ', idValue)
         #print('HEEEEEEEEEEEERE', variableOffset, variableScope)
-
+        functionOffset = 0 
         if 'local' in variableScope:
             scopeSplit = variableScope.split('.')
-            variableScope = 'global.' + scopeSplit[1]
+            functionOffset = self.symbol_table.getFunctionOffset(scopeSplit[2], scopeSplit[1])
+            variableScope = 'local.' + scopeSplit[2]
 
-        idAddress = variableScope + '[' + str(variableOffset) + ']'
+        idAddress = variableScope + '[' + str(variableOffset - functionOffset) + ']'
         # for i in exprType.code:
         #     print(i)
         threeCode = ThreeAddressCode()
@@ -845,8 +850,8 @@ class IntermediateCode(ParseTreeVisitor):
                 threeCode.add(Quadruple('PARAMETER', None, None, element.address))
             # for ij in threeCode.code:
             #     cprint(ij, 'red')
-            # if element.address[0] == 't' and element.address[1:].isnumeric():
-            #     self.generate.makeTemporalAvailable(element.address)
+            if element.address[0] == 't' and element.address[1:].isnumeric():
+                self.generate.makeTemporalAvailable(element.address)
         # Return ID type
         #print('CHECKING', callerType, ctx.children[idIndex].getText())
         existenceMethod = self.symbol_table.getCallMethodExistence(ctx.children[idIndex].getText(), 'global.' + callerType, self.current_function)
