@@ -26,16 +26,28 @@ class MipsGenerator():
                 if quadruple.result != None:
                     if quadruple.result[0] == 't':
                         result = '$'+quadruple.result
+                    elif quadruple.result.startswith('global.') or quadruple.result.startswith('local.'):
+                        # LOAD VALUE FROM TABLE
+                        self.code.append("lw $s0, " + quadruple.result)
+                        result = "$s0"
                     else:
                         result = quadruple.result
                 if quadruple.arg1 != None:
                     if quadruple.arg1[0] == 't':
                         arg1 = '$'+quadruple.arg1
+                    elif quadruple.arg1.startswith('global.') or quadruple.arg1.startswith('local.'):
+                        # LOAD VALUE FROM TABLE
+                        self.code.append("lw $s0, " + quadruple.arg1)
+                        arg1 = "$s0"
                     else:
                         arg1 = quadruple.arg1
                 if quadruple.arg2 != None:
                     if quadruple.arg2[0] == 't':
                         arg2 = '$'+quadruple.arg2
+                    elif quadruple.arg2.startswith('global.') or quadruple.arg2.startswith('local.'):
+                        # LOAD VALUE FROM TABLE
+                        self.code.append("lw $s0, " + quadruple.arg2)
+                        arg2 = "$s0"
                     else:
                         arg2 = quadruple.arg2
                 if quadruple.op == '+':
@@ -48,6 +60,9 @@ class MipsGenerator():
                 elif quadruple.op == '/':
                     self.code.append("div " + arg1 + ", " + arg2)
                     self.code.append("mflo " + result)
+                elif quadruple.op == 'equal':
+                    if quadruple.arg2 == None:
+                        self.code.append("sw " + result + ", " + arg1)
 
                     
     def generate(self):
