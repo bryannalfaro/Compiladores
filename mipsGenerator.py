@@ -44,7 +44,10 @@ class MipsGenerator():
                     elif quadruple.result.startswith('global.') or quadruple.result.startswith('local.'):
                         # LOAD VALUE FROM TABLE
                         availableVar = '$' + self.getSVariable()
-                        self.code.append("lw "+ availableVar + ", " + quadruple.result)
+                        startAddress = quadruple.result.index('[')
+                        endAddress = quadruple.result.index(']')
+                        resultName = quadruple.result[startAddress + 1: endAddress] + '(' + quadruple.result[0:startAddress] + ')'
+                        self.code.append("lw "+ availableVar + ", " + resultName)
                         result = availableVar
                     else:
                         result = quadruple.result
@@ -54,7 +57,10 @@ class MipsGenerator():
                     elif quadruple.arg1.startswith('global.') or quadruple.arg1.startswith('local.'):
                         # LOAD VALUE FROM TABLE
                         availableVar = '$' + self.getSVariable()
-                        self.code.append("lw "+ availableVar + ", " + quadruple.arg1)
+                        startAddress = quadruple.arg1.index('[')
+                        endAddress = quadruple.arg1.index(']')
+                        arg1Name = quadruple.arg1[startAddress + 1: endAddress] + '(' + quadruple.arg1[0:startAddress] + ')'
+                        self.code.append("lw "+ availableVar + ", " + arg1Name)
                         arg1 = availableVar
                     else:
                         arg1 = quadruple.arg1
@@ -64,7 +70,10 @@ class MipsGenerator():
                     elif quadruple.arg2.startswith('global.') or quadruple.arg2.startswith('local.'):
                         # LOAD VALUE FROM TABLE
                         availableVar = '$' + self.getSVariable()
-                        self.code.append("lw "+ availableVar + ", " + quadruple.arg2)
+                        startAddress = quadruple.arg2.index('[')
+                        endAddress = quadruple.arg2.index(']')
+                        arg2Name = quadruple.arg2[startAddress + 1: endAddress] + '(' + quadruple.arg2[0:startAddress] + ')'
+                        self.code.append("lw "+ availableVar + ", " + arg2Name)
                         arg2 = availableVar
                     else:
                         arg2 = quadruple.arg2
