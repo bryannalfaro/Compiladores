@@ -35,3 +35,5 @@ class Quadruple(object):
             return self.op + ' ' + self.result
         elif self.op == 'big':
             return 'if' + ' ' + self.arg1  + ' goto ' + self.result
+        elif self.op == 'CALLER':
+            return self.op + ' ' + self.result

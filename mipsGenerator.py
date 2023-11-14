@@ -8,10 +8,13 @@ class MipsGenerator():
         self.savedVariables = []
         self.currentSaved = 0
         self.strings = {}
+        self.types = {}
+        self.hasSubstr = False
     
     def generateData(self):
         self.data.append(".data")
         string_counter = 0
+        type_counter = 0
         for three in self.threeAddressCode:
             for quadruple in three.code:
                 if quadruple.op == 'PARAMETER':
@@ -20,6 +23,12 @@ class MipsGenerator():
                         #add the const_counter and quadruple result
                         self.strings[string_counter] = quadruple.result
                         string_counter += 1
+                if quadruple.op == 'CALLER':
+                    self.data.append("type_"+ str(type_counter)+": .asciiz "+'"'+quadruple.result+'"') #agregar el texto
+                    self.data.append("buffer_"+str(type_counter)+": .space "+str(len(quadruple.result)+1)) #reservar espacio para substring
+                    self.types[type_counter] = '"' + quadruple.result + '"'
+                    type_counter += 1
+
     
     def generateText(self):
         self.text.append(".text")
@@ -48,9 +57,16 @@ class MipsGenerator():
     def generateDefault(self):
         self.code.append("out_string: li $v0, 4 \n\tsyscall\n\tjr $ra")
         return
-
+    
+    def generateSubstr(self):
+        self.code.append("substr: add $a0, $a0, $a1\n\tmove $t0, $a0\n\tmove $t1, $a3\n\tli $t2, 0")         
+        self.code.append("fill_buffer:lb $t3, 0($t0)\n\tsb $t3, 0($t1)\n\taddi $t0, $t0, 1\n\taddi $t1, $t1, 1\n\taddi $t2, $t2, 1\n\tbne $t2, $a2, fill_buffer")
+        self.code.append("\n\tsb $zero, 0($t1)\n\tmove $v0, $a3\n\tjr $ra")
+        
     def generateCode(self):
         result, arg1, arg2 = None, None, None
+        counterArguments= 0
+        actualCaller = None
         for three in self.threeAddressCode:
             for quadruple in three.code:
                 if quadruple.result != None and quadruple.op != 'CALL':
@@ -121,7 +137,25 @@ class MipsGenerator():
                         self.makeSAvailable(arg1) 
                 elif quadruple.op == 'CALL':
                     if quadruple.result == 'global.IO[0]':
+                        counterArguments = 0
                         self.code.append("\tjal out_string")
+                    if quadruple.result == 'global.String[2]':
+                        self.hasSubstr = True
+                        keyCount = None
+                        for key, value in self.types.items():
+                            if value == actualCaller:
+                                self.code.append("\tla $a"+str(counterArguments%4)+", buffer_" + str(key))
+                                counterArguments+=1
+                                keyCount = str(key)
+                        self.code.append("\tjal substr")
+                        self.code.append("\t la $t1, buffer_"+keyCount)
+                elif quadruple.op == 'CALLER':
+                    for key, value in self.types.items():
+                        if value == '"' + quadruple.result + '"':
+                            self.code.append("\tla $t0, type_" + str(key))
+                            self.code.append("\tmove $a"+str(counterArguments%4)+", $t0")
+                            actualCaller = '"' + quadruple.result + '"'
+                            counterArguments+=1
                 elif quadruple.op == 'PARAMETER':
                     if quadruple.result[0] == '"' and quadruple.result[-1] == '"':
                         #search if value matches in object of string
@@ -129,7 +163,14 @@ class MipsGenerator():
                             if value == quadruple.result:
                                 self.code.append("\tla $a0, const_" + str(key))
                     else:
-                        self.code.append("\tmove $a0, " + result)
+                        #check if result is int
+                        try:
+                            int(result)
+                            self.code.append("\tli $a"+str(counterArguments%4)+", " + result)
+                        except:
+                            self.code.append("\tmove $a"+str(counterArguments%4)+", " + result)
+                            
+                        counterArguments +=1
         self.code.append("\tjr $ra")
 
                     
@@ -141,6 +182,8 @@ class MipsGenerator():
         self.code.append("li $v0, 10")
         self.code.append("syscall")
         self.generateDefault()
+        if self.hasSubstr:
+            self.generateSubstr()
         
 
 

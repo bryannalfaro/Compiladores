@@ -838,6 +838,9 @@ class IntermediateCode(ParseTreeVisitor):
         #cprint('CALLER TYPE' + callerType, 'red')
         #cprint('CALLER' + ctx.children[idIndex].getText(), 'red')
 
+        if ctx.children[idIndex].getText()=='type_name':
+            threeCode.add(Quadruple('CALLER', None, None, callerType))
+
         bigexprChildCount = int((len(ctx.children) - idIndex - 3) / 2 + 0.5)
         ## Add parameters
         for i in range(idIndex + 2, len(ctx.children) - 1, 2):
