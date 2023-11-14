@@ -195,7 +195,7 @@ const Landing = () => {
             language={language?.value}
             theme={theme.value}
           />
-          <h1 className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 mb-2">Three Address Code </h1>
+          <h1 className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 mb-2">MIPS Code </h1>
           <CodeEditorWindow
             code={outputDetails?.code || ""}
             language={"txt"}

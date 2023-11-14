@@ -11,6 +11,7 @@ from customLex import CustomLexer
 from flask import Flask,request, jsonify
 from flask_cors import CORS
 from visitor3add import IntermediateCode
+from mipsGenerator import MipsGenerator
 
 app = Flask(__name__)
 
@@ -72,14 +73,19 @@ def yapl_compile():
           code  = intermediate.visit(tree)
           for line in code:
                 code_string += str(line) + '\n'
+          code_string = ''
+          mipsCode = MipsGenerator(code)
+          mipsCode.generate()
+          
           #print the symbol table
         #   visitor.symbol_table.printTable()
     # Get the errors
+        
     
     for error in visitor.errors_list:
         results.append(error.__str__())
     return jsonify({'result': results,
-                    'code': code_string
+                    'code': str(mipsCode),
                     })
 
 if __name__ == '__main__':
