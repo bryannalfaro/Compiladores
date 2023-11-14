@@ -7,6 +7,7 @@ class MipsGenerator():
         self.stack = []
         self.savedVariables = []
         self.currentSaved = 0
+        self.strings = {}
     
     def generateData(self):
         self.data.append(".data")
@@ -16,6 +17,9 @@ class MipsGenerator():
                 if quadruple.op == 'PARAMETER':
                     if quadruple.result[0] == '"' and quadruple.result[-1] == '"':
                         self.data.append("const_" + str(string_counter) + ": .asciiz " + quadruple.result)
+                        #add the const_counter and quadruple result
+                        self.strings[string_counter] = quadruple.result
+                        string_counter += 1
     
     def generateText(self):
         self.text.append(".text")
@@ -42,7 +46,7 @@ class MipsGenerator():
             self.savedVariables.append(value[1:])
 
     def generateDefault(self):
-        self.code.append("out_string: li $v0, 4\n\tla $a0, const_0\n\tsyscall\n\tjr $ra")
+        self.code.append("out_string: li $v0, 4 \n\tsyscall\n\tjr $ra")
         return
 
     def generateCode(self):
@@ -118,6 +122,14 @@ class MipsGenerator():
                 elif quadruple.op == 'CALL':
                     if quadruple.result == 'global.IO[0]':
                         self.code.append("\tjal out_string")
+                elif quadruple.op == 'PARAMETER':
+                    if quadruple.result[0] == '"' and quadruple.result[-1] == '"':
+                        #search if value matches in object of string
+                        for key, value in self.strings.items():
+                            if value == quadruple.result:
+                                self.code.append("\tla $a0, const_" + str(key))
+                    else:
+                        self.code.append("\tmove $a0, " + result)
         self.code.append("\tjr $ra")
 
                     
@@ -125,7 +137,12 @@ class MipsGenerator():
         self.generateData()
         self.generateText()
         self.generateCode()
+        #terminate
+        self.code.append("li $v0, 10")
+        self.code.append("syscall")
         self.generateDefault()
+        
+
 
     
     def __str__(self):
